@@ -1,0 +1,16 @@
+results/*
+results/**
+results/***
+data/*
+data/**
+data/***
+.snakemake/*
+snakemake/*
+snakemake/**
+tmp_rf_full_concat/**
+*.pdf
+.github/**
+.vscode/***
+.vscode/*
+.vscode/**
+

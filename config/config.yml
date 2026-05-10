@@ -1,0 +1,15 @@
+# -----------------------------
+# Reproducibility and resources
+# -----------------------------
+max_threads: 8
+
+# -----------------------------
+# Pre-processing: MMseqs2 clustering
+# -----------------------------
+mmseqs:
+  min_seq_id: 0.95
+  coverage: 0.8
+  cov_mode: 1
+  sensitivity: 7.5
+  sub_mat: "aa:blosum62.out,nucl:nucleotide.out"
+  threads: 8
