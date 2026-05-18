@@ -1,7 +1,18 @@
 # -----------------------------
 # Reproducibility and resources
 # -----------------------------
-max_threads: 8
+max_threads: 18
+
+batching:
+  "25_50": 1
+  # "10_25": 1
+
+# -----------------------------
+# Curated FASTA inputs
+# -----------------------------
+curated_fastas:
+  "25_50": "data/curated_md-lais/25_50/alls_RangeSelected_25_50_curado.fasta"
+ #"10_25": "data/curated_md-lais/10_25/alls_RangeSelected_10_25_curado.fasta"
 
 # -----------------------------
 # Pre-processing: MMseqs2 clustering
@@ -12,4 +23,8 @@ mmseqs:
   cov_mode: 1
   sensitivity: 7.5
   sub_mat: "aa:blosum62.out,nucl:nucleotide.out"
-  threads: 8
+# -----------------------------
+# Tox_check: 
+# -----------------------------
+toxteller:
+  program_dir: "resources/ToxTeller/"
