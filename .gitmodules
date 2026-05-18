@@ -1,0 +1,6 @@
+[submodule "resources/ToxTeller"]
+	path = resources/ToxTeller
+	url = https://github.com/comics-asiis/ToxicPeptidePrediction.git
+[submodule "resources/CAPTP"]
+	path = resources/CAPTP
+	url = https://github.com/jiaoshihu/CAPTP.git

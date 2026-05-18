@@ -10,6 +10,9 @@ snakemake/**
 resources/*
 resources/**
 resources/***
+!resources/
+!resources/ToxTeller
+!resources/CAPTP
 tmp_rf_full_concat/**
 *.pdf
 .github/**

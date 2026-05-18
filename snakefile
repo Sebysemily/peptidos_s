@@ -12,12 +12,13 @@ def n_batches(peptide_set):
     return batches
 
 
-def batch_ids_for(peptide_set):
-    return [str(i) for i in range(1, n_batches(peptide_set) + 1)]
-
-
 include: "rules/pre_processing.smk"
 include: "rules/tox_check.smk"
+include: "rules/hem_check.smk"
+
+SETUP_TARGETS = [
+    "results/setup/.external_resources_checked",
+]
 
 PRE_PROCESSING_TARGETS = [
     *expand(
@@ -44,7 +45,38 @@ TOXTELLER_TARGETS = [
     )
 ]
 
+CAPTP_TARGETS = [
+    *expand(
+        "results/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv",
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
+HEMOPI2_TARGETS = [
+    *expand(
+        (
+            "results/hemopi2_classification/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_hemopi2_classification.csv"
+        ),
+        peptide_set=PEPTIDE_SETS,
+    ),
+    *expand(
+        (
+            "results/hemopi2_regression/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_hemopi2_regression.csv"
+        ),
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
 
 rule all:
     input:
-        PRE_PROCESSING_TARGETS + TOX_CHECK_TARGETS + TOXTELLER_TARGETS
+        (
+            SETUP_TARGETS
+            + PRE_PROCESSING_TARGETS
+            + TOX_CHECK_TARGETS
+            + TOXTELLER_TARGETS
+            + CAPTP_TARGETS
+            + HEMOPI2_TARGETS
+        )

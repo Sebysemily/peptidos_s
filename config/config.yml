@@ -28,3 +28,6 @@ mmseqs:
 # -----------------------------
 toxteller:
   program_dir: "resources/ToxTeller/"
+
+captp:
+  program_dir: "resources/CAPTP/"
