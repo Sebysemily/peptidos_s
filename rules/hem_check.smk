@@ -13,54 +13,34 @@ rule hemopi2_classification_batch:
         fasta=lambda wildcards, input: (
             f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
         ),
-        outdir="results/hemopi2_classification/{peptide_set}/batches",
         workdir="results/hemopi2_classification/{peptide_set}/work/batch_{batch_id}",
+        input_fasta="results/hemopi2_classification/{peptide_set}/work/batch_{batch_id}/input.fasta",
         report_name="batch_{batch_id}.csv",
     threads: THREADS
     conda:
         "../envs/hemolisis_check.yml"
     shell:
         r"""
-        mkdir -p {params.outdir}
         rm -rf {params.workdir}
         mkdir -p {params.workdir}
-        input_fasta="$(realpath {params.fasta})"
         output_report="$(realpath -m {output.report})"
         workdir="$(realpath -m {params.workdir})"
+        mkdir -p "$(dirname "$output_report")"
 
-        if command -v hemopi2_classification >/dev/null 2>&1; then
-            hemopi2_cmd="hemopi2_classification"
-        elif command -v hemopi2_classification.py >/dev/null 2>&1; then
-            hemopi2_cmd="hemopi2_classification.py"
-        else
-            echo "HemoPI2 classification command not found." >&2
-            echo "Expected hemopi2_classification or hemopi2_classification.py." >&2
-            exit 1
-        fi
+        python code/hem_check/sanitize_fasta_for_hemopi2.py \
+            --input {params.fasta} \
+            --output {params.input_fasta}
+        input_fasta="$(realpath {params.input_fasta})"
 
-        "$hemopi2_cmd" \
+        hemopi2_classification \
             -i "$input_fasta" \
-            -o "{params.report_name}" \
+            -o {params.report_name} \
             -j 1 \
             -m 2 \
             -d 2 \
             -wd "$workdir"
 
-        for candidate in \
-            "$workdir/{params.report_name}" \
-            "$workdir/final_output.csv" \
-            "$workdir/final_output" \
-            "$workdir/outfile.csv"; do
-            if [ -f "$candidate" ]; then
-                mv "$candidate" "$output_report"
-                break
-            fi
-        done
-
-        if [ ! -f "$output_report" ]; then
-            echo "HemoPI2 classification did not create an expected CSV output." >&2
-            exit 1
-        fi
+        mv "$workdir/{params.report_name}" "$output_report"
         """
 
 
@@ -96,53 +76,33 @@ rule hemopi2_regression_batch:
         fasta=lambda wildcards, input: (
             f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
         ),
-        outdir="results/hemopi2_regression/{peptide_set}/batches",
         workdir="results/hemopi2_regression/{peptide_set}/work/batch_{batch_id}",
+        input_fasta="results/hemopi2_regression/{peptide_set}/work/batch_{batch_id}/input.fasta",
         report_name="batch_{batch_id}.csv",
     threads: THREADS
     conda:
         "../envs/hemolisis_check.yml"
     shell:
         r"""
-        mkdir -p {params.outdir}
         rm -rf {params.workdir}
         mkdir -p {params.workdir}
-        input_fasta="$(realpath {params.fasta})"
         output_report="$(realpath -m {output.report})"
         workdir="$(realpath -m {params.workdir})"
+        mkdir -p "$(dirname "$output_report")"
 
-        if command -v hemopi2_regression >/dev/null 2>&1; then
-            hemopi2_cmd="hemopi2_regression"
-        elif command -v hemopi2_regression.py >/dev/null 2>&1; then
-            hemopi2_cmd="hemopi2_regression.py"
-        else
-            echo "HemoPI2 regression command not found." >&2
-            echo "Expected hemopi2_regression or hemopi2_regression.py." >&2
-            exit 1
-        fi
+        python code/hem_check/sanitize_fasta_for_hemopi2.py \
+            --input {params.fasta} \
+            --output {params.input_fasta}
+        input_fasta="$(realpath {params.input_fasta})"
 
-        "$hemopi2_cmd" \
+        hemopi2_regression \
             -i "$input_fasta" \
-            -o "{params.report_name}" \
+            -o {params.report_name} \
             -j 1 \
             -d 2 \
             -wd "$workdir"
 
-        for candidate in \
-            "$workdir/{params.report_name}" \
-            "$workdir/final_output.csv" \
-            "$workdir/final_output" \
-            "$workdir/outfile.csv"; do
-            if [ -f "$candidate" ]; then
-                mv "$candidate" "$output_report"
-                break
-            fi
-        done
-
-        if [ ! -f "$output_report" ]; then
-            echo "HemoPI2 regression did not create an expected CSV output." >&2
-            exit 1
-        fi
+        mv "$workdir/{params.report_name}" "$output_report"
         """
 
 

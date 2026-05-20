@@ -10,22 +10,33 @@ def read_fasta_records(path):
     records = []
     header = None
     seq_lines = []
+    skipped_empty = 0
 
     with open(path, "r", encoding="utf-8") as handle:
         for raw_line in handle:
             line = raw_line.rstrip("\n")
             if line.startswith(">"):
                 if header is not None:
-                    records.append((header, seq_lines))
+                    if sequence_length(seq_lines) > 0:
+                        records.append((header, seq_lines))
+                    else:
+                        skipped_empty += 1
                 header = line
                 seq_lines = []
             else:
                 seq_lines.append(line)
 
     if header is not None:
-        records.append((header, seq_lines))
+        if sequence_length(seq_lines) > 0:
+            records.append((header, seq_lines))
+        else:
+            skipped_empty += 1
 
-    return records
+    return records, skipped_empty
+
+
+def sequence_length(seq_lines):
+    return sum(len(line.strip()) for line in seq_lines)
 
 
 def write_records(path, records):
@@ -69,9 +80,9 @@ def main():
     )
     args = parser.parse_args()
 
-    records = read_fasta_records(args.input)
+    records, skipped_empty = read_fasta_records(args.input)
     if not records:
-        raise SystemExit(f"No FASTA records found in {args.input}")
+        raise SystemExit(f"No non-empty FASTA records found in {args.input}")
 
     if args.n_batches is not None:
         if args.n_batches < 1:
@@ -100,6 +111,7 @@ def main():
     complete.write_text(
         f"input={os.path.abspath(args.input)}\n"
         f"records={len(records)}\n"
+        f"skipped_empty={skipped_empty}\n"
         f"batches={n_batches}\n",
         encoding="utf-8",
     )

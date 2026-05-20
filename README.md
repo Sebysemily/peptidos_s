@@ -28,7 +28,8 @@ Current stages:
 2. Run ToxinPred3 on representative sequences.
 3. Run ToxTeller on representative sequences.
 4. Run CAPTP on compatible representative sequences.
-5. Run HemoPI2 classification and regression on representative sequences.
+5. Build a combined toxicity summary CSV for manual filtering.
+6. Optionally run HemoPI2 classification and regression on representative sequences.
 
 ## Inputs
 
@@ -61,8 +62,6 @@ Important fields:
   default to 1 batch.
 - `max_threads`: global thread limit used by all threaded rules.
 - `mmseqs`: MMseqs2 clustering parameters.
-- `toxteller.program_dir`: local checkout path for ToxTeller.
-- `captp.program_dir`: local checkout path for CAPTP.
 
 Example:
 
@@ -72,12 +71,6 @@ max_threads: 18
 batching:
   "25_50": 1
   # "10_25": 1
-
-toxteller:
-  program_dir: "resources/ToxTeller/"
-
-captp:
-  program_dir: "resources/CAPTP/"
 ```
 
 ToxTeller is stored inside the project under `resources/ToxTeller/`. If
@@ -143,6 +136,12 @@ CAPTP report:
 results/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv
 ```
 
+Combined toxicity summary:
+
+```text
+results/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv
+```
+
 HemoPI2 reports:
 
 ```text
@@ -166,6 +165,9 @@ results/toxinpred3/25_50/clusters_25_50_rep_seq_toxinpred3.csv
   preprocessing adds a `[CLS]` token and fails on 50-aa peptides. Empty
   sequences and longer peptides are omitted from CAPTP outputs and can be left
   blank in a combined final report.
+- The combined toxicity summary uses the FASTA sequence as the merge key for
+  ToxTeller and CAPTP, keeps the original FASTA header as `peptide_id`, and
+  includes `toxicity_filter_pass` as a convenience column for manual filtering.
 - HemoPI2 is installed from pip because the local standalone checkout does not
   include the large model directory. Classification uses Hybrid1 RF+MERCI
   (`-m 2`) and regression reports HC50. HemoPI2 rules live in

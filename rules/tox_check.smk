@@ -7,51 +7,14 @@ PEPTIDE_SET = "|".join(
 )
 
 
-TOXTELLER_CONFIG = config.get("toxteller", {})
-TOXTELLER_PROGRAM_DIR = TOXTELLER_CONFIG["program_dir"]
-
-CAPTP_CONFIG = config.get("captp", {})
-CAPTP_PROGRAM_DIR = CAPTP_CONFIG["program_dir"]
-
-
 wildcard_constraints:
     peptide_set=PEPTIDE_SET,
     batch_id=r"\d+"
 
 
-rule check_external_resources:
-    output:
-        touch("results/setup/.external_resources_checked")
-    priority: 100
-    params:
-        toxteller=TOXTELLER_PROGRAM_DIR,
-        captp=CAPTP_PROGRAM_DIR,
-    shell:
-        r"""
-        missing=0
-
-        if [ ! -f "{params.toxteller}/program_resource/toxteller.py" ]; then
-            echo "ToxTeller checkout is missing or incomplete: {params.toxteller}" >&2
-            echo "Expected file: {params.toxteller}/program_resource/toxteller.py" >&2
-            missing=1
-        fi
-
-        if [ ! -f "{params.captp}/main.py" ]; then
-            echo "CAPTP checkout is missing or incomplete: {params.captp}" >&2
-            echo "Expected file: {params.captp}/main.py" >&2
-            missing=1
-        fi
-
-        if [ "$missing" -ne 0 ]; then
-            echo "Initialize external resources with:" >&2
-            echo "  git submodule update --init --recursive" >&2
-            exit 1
-        fi
-        """
-
-
 checkpoint split_tox_check_batches:
     input:
+        script="code/tox_check/split_fasta_batches.py",
         rep_seq=(
             "data/curated_md-lais/mmseqs2/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq.fasta"
@@ -64,7 +27,7 @@ checkpoint split_tox_check_batches:
         "../envs/tox_check.yml"
     shell:
         r"""
-        python code/tox_check/split_fasta_batches.py \
+        python {input.script} \
             --input {input.rep_seq} \
             --outdir {output} \
             --n-batches {params.n_batches}
@@ -93,6 +56,7 @@ def tox_check_batch_reports(wildcards, tool):
 
 checkpoint split_toxteller_batches:
     input:
+        script="code/tox_check/split_fasta_batches.py",
         rep_seq=(
             "data/curated_md-lais/mmseqs2/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq.fasta"
@@ -105,7 +69,7 @@ checkpoint split_toxteller_batches:
         "../envs/tox_check.yml"
     shell:
         r"""
-        python code/tox_check/split_fasta_batches.py \
+        python {input.script} \
             --input {input.rep_seq} \
             --outdir {output} \
             --max-records-per-batch {params.max_sequences_per_batch}
@@ -145,6 +109,9 @@ rule toxinpred3_batch:
         ),
         outdir="results/toxinpred3/{peptide_set}/batches",
         workdir="results/toxinpred3/{peptide_set}/work/batch_{batch_id}",
+        indexed_fasta="results/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_indexed.fasta",
+        mapping="results/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_mapping.csv",
+        raw_report="results/toxinpred3/{peptide_set}/work/batch_{batch_id}/raw_toxinpred3.csv",
     threads: THREADS
     conda:
         "../envs/tox_check.yml"
@@ -153,10 +120,21 @@ rule toxinpred3_batch:
         mkdir -p {params.outdir}
         rm -rf {params.workdir}
         mkdir -p {params.workdir}
-        input_fasta="$(realpath {params.fasta})"
+        python code/tox_check/prepare_toxinpred3_input.py \
+            --input {params.fasta} \
+            --output-fasta {params.indexed_fasta} \
+            --mapping {params.mapping} \
+            --prefix "{wildcards.peptide_set}_{wildcards.batch_id}"
+        input_fasta="$(realpath {params.indexed_fasta})"
+        raw_report="$(realpath -m {params.raw_report})"
         output_report="$(realpath -m {output.report})"
         cd {params.workdir}
-        toxinpred3 -i "$input_fasta" -o "$output_report" -m 2 -d 2
+        toxinpred3 -i "$input_fasta" -o "$raw_report" -m 2 -d 2
+        cd -
+        python code/tox_check/annotate_toxinpred3_report.py \
+            --raw-report "$raw_report" \
+            --mapping {params.mapping} \
+            --output "$output_report"
         """
 
 
@@ -191,7 +169,7 @@ rule toxteller_batch:
             f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
         ),
         outdir="results/toxteller/{peptide_set}/batches",
-        program_dir=TOXTELLER_PROGRAM_DIR,
+        tool_dir=TOXTELLER_PROGRAM_DIR,
     threads: THREADS
     conda:
         "../envs/tox_check.yml"
@@ -200,13 +178,7 @@ rule toxteller_batch:
         mkdir -p {params.outdir}
         input_fasta="$(realpath {params.fasta})"
         output_report="$(realpath -m {output.report})"
-        if [ ! -f "{params.program_dir}/program_resource/toxteller.py" ]; then
-            echo "ToxTeller checkout is missing or incomplete: {params.program_dir}" >&2
-            echo "Initialize resources with: git submodule update --init --recursive" >&2
-            echo "Expected file: {params.program_dir}/program_resource/toxteller.py" >&2
-            exit 1
-        fi
-        cd {params.program_dir}/program_resource
+        cd {params.tool_dir}/program_resource
         python toxteller.py "$input_fasta"
         mv "${{input_fasta}}.csv" "$output_report"
         """
@@ -271,7 +243,7 @@ rule captp_batch:
         ),
     params:
         outdir="results/captp/{peptide_set}/batches",
-        program_dir=CAPTP_PROGRAM_DIR,
+        tool_dir=CAPTP_PROGRAM_DIR,
         report_name="batch_{batch_id}.csv",
     threads: THREADS
     conda:
@@ -281,17 +253,11 @@ rule captp_batch:
         mkdir -p {params.outdir}
         input_fasta="$(realpath {input.fasta})"
         output_report="$(realpath -m {output.report})"
-        if [ ! -f "{params.program_dir}/main.py" ]; then
-            echo "CAPTP checkout is missing or incomplete: {params.program_dir}" >&2
-            echo "Initialize resources with: git submodule update --init --recursive" >&2
-            echo "Expected file: {params.program_dir}/main.py" >&2
-            exit 1
-        fi
         if [ "$(grep -c '^>' "$input_fasta")" -eq 0 ]; then
             printf 'Seq_ID,Sequences,Prediction,Confidence\n' > "$output_report"
             exit 0
         fi
-        cd {params.program_dir}
+        cd {params.tool_dir}
         rm -f "Results/{params.report_name}"
         python main.py -i "$input_fasta" -o "{params.report_name}"
         mv "Results/{params.report_name}" "$output_report"
@@ -313,4 +279,40 @@ rule merge_captp_batches:
         python code/merge_csv_reports.py \
             --inputs {input} \
             --output {output.report}
+        """
+
+
+rule build_toxicity_summary:
+    input:
+        fasta=(
+            "data/curated_md-lais/mmseqs2/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq.fasta"
+        ),
+        toxinpred3=(
+            "results/toxinpred3/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_toxinpred3.csv"
+        ),
+        toxteller=(
+            "results/toxteller/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_toxteller.csv"
+        ),
+        captp=(
+            "results/captp/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_captp.csv"
+        ),
+    output:
+        summary=(
+            "results/toxicity_summary/{peptide_set}/"
+            "clusters_{peptide_set}_toxicity_summary.csv"
+        ),
+    conda:
+        "../envs/tox_check.yml"
+    shell:
+        r"""
+        python code/tox_check/build_toxicity_summary.py \
+            --fasta {input.fasta} \
+            --toxinpred3 {input.toxinpred3} \
+            --toxteller {input.toxteller} \
+            --captp {input.captp} \
+            --output-csv {output.summary}
         """

@@ -52,6 +52,13 @@ CAPTP_TARGETS = [
     )
 ]
 
+TOXICITY_SUMMARY_TARGETS = [
+    *expand(
+        "results/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv",
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
 HEMOPI2_TARGETS = [
     *expand(
         (
@@ -78,5 +85,5 @@ rule all:
             + TOX_CHECK_TARGETS
             + TOXTELLER_TARGETS
             + CAPTP_TARGETS
-            + HEMOPI2_TARGETS
+            + TOXICITY_SUMMARY_TARGETS
         )
