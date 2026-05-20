@@ -20,11 +20,11 @@ checkpoint split_tox_check_batches:
             "clusters_{peptide_set}_rep_seq.fasta"
         ),
     output:
-        directory("results/batches/tox_check/{peptide_set}"),
+        directory("results/pre_processing/batches/tox_check/{peptide_set}"),
     params:
         n_batches=lambda wildcards: n_batches(wildcards.peptide_set),
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python {input.script} \
@@ -47,7 +47,7 @@ def tox_check_batch_reports(wildcards, tool):
     ).batch_id
     batch_ids = sorted(batch_ids, key=int)
     return expand(
-        "results/{tool}/{peptide_set}/batches/batch_{batch_id}.csv",
+        "results/tox_check/{tool}/{peptide_set}/batches/batch_{batch_id}.csv",
         tool=tool,
         peptide_set=wildcards.peptide_set,
         batch_id=batch_ids,
@@ -62,11 +62,11 @@ checkpoint split_toxteller_batches:
             "clusters_{peptide_set}_rep_seq.fasta"
         ),
     output:
-        directory("results/batches/toxteller/{peptide_set}"),
+        directory("results/pre_processing/batches/toxteller/{peptide_set}"),
     params:
         max_sequences_per_batch=9500,
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxteller.yml"
     shell:
         r"""
         python {input.script} \
@@ -89,7 +89,7 @@ def toxteller_batch_reports(wildcards):
     ).batch_id
     batch_ids = sorted(batch_ids, key=int)
     return expand(
-        "results/toxteller/{peptide_set}/batches/batch_{batch_id}.csv",
+        "results/tox_check/toxteller/{peptide_set}/batches/batch_{batch_id}.csv",
         peptide_set=wildcards.peptide_set,
         batch_id=batch_ids,
     )
@@ -100,21 +100,21 @@ rule toxinpred3_batch:
         batch_dir=tox_check_batch_dir,
     output:
         report=(
-            "results/toxinpred3/{peptide_set}/batches/"
+            "results/tox_check/toxinpred3/{peptide_set}/batches/"
             "batch_{batch_id}.csv"
         ),
     params:
         fasta=lambda wildcards, input: (
             f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
         ),
-        outdir="results/toxinpred3/{peptide_set}/batches",
-        workdir="results/toxinpred3/{peptide_set}/work/batch_{batch_id}",
-        indexed_fasta="results/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_indexed.fasta",
-        mapping="results/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_mapping.csv",
-        raw_report="results/toxinpred3/{peptide_set}/work/batch_{batch_id}/raw_toxinpred3.csv",
+        outdir="results/tox_check/toxinpred3/{peptide_set}/batches",
+        workdir="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}",
+        indexed_fasta="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_indexed.fasta",
+        mapping="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_mapping.csv",
+        raw_report="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}/raw_toxinpred3.csv",
     threads: THREADS
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         mkdir -p {params.outdir}
@@ -143,11 +143,11 @@ rule merge_toxinpred3_batches:
         lambda wildcards: tox_check_batch_reports(wildcards, "toxinpred3")
     output:
         report=(
-            "results/toxinpred3/{peptide_set}/"
+            "results/tox_check/toxinpred3/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxinpred3.csv"
         ),
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python code/merge_csv_reports.py \
@@ -161,18 +161,18 @@ rule toxteller_batch:
         batch_dir=toxteller_batch_dir,
     output:
         report=(
-            "results/toxteller/{peptide_set}/batches/"
+            "results/tox_check/toxteller/{peptide_set}/batches/"
             "batch_{batch_id}.csv"
         ),
     params:
         fasta=lambda wildcards, input: (
             f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
         ),
-        outdir="results/toxteller/{peptide_set}/batches",
+        outdir="results/tox_check/toxteller/{peptide_set}/batches",
         tool_dir=TOXTELLER_PROGRAM_DIR,
     threads: THREADS
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxteller.yml"
     shell:
         r"""
         mkdir -p {params.outdir}
@@ -189,11 +189,11 @@ rule merge_toxteller_batches:
         toxteller_batch_reports
     output:
         report=(
-            "results/toxteller/{peptide_set}/"
+            "results/tox_check/toxteller/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxteller.csv"
         ),
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxteller.yml"
     shell:
         r"""
         python code/merge_csv_reports.py \
@@ -207,11 +207,11 @@ rule filter_captp_batch:
         batch_dir=tox_check_batch_dir,
     output:
         fasta=(
-            "results/batches/captp/{peptide_set}/"
+            "results/pre_processing/batches/captp/{peptide_set}/"
             "batch_{batch_id}.fasta"
         ),
         stats=(
-            "results/batches/captp/{peptide_set}/"
+            "results/pre_processing/batches/captp/{peptide_set}/"
             "batch_{batch_id}.stats"
         ),
     params:
@@ -220,7 +220,7 @@ rule filter_captp_batch:
         ),
         max_sequence_length=49,
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python code/tox_check/filter_fasta_by_length.py \
@@ -235,19 +235,19 @@ rule filter_captp_batch:
 rule captp_batch:
     input:
         resources_checked="results/setup/.external_resources_checked",
-        fasta="results/batches/captp/{peptide_set}/batch_{batch_id}.fasta",
+        fasta="results/pre_processing/batches/captp/{peptide_set}/batch_{batch_id}.fasta",
     output:
         report=(
-            "results/captp/{peptide_set}/batches/"
+            "results/tox_check/captp/{peptide_set}/batches/"
             "batch_{batch_id}.csv"
         ),
     params:
-        outdir="results/captp/{peptide_set}/batches",
+        outdir="results/tox_check/captp/{peptide_set}/batches",
         tool_dir=CAPTP_PROGRAM_DIR,
         report_name="batch_{batch_id}.csv",
     threads: THREADS
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         mkdir -p {params.outdir}
@@ -269,11 +269,11 @@ rule merge_captp_batches:
         lambda wildcards: tox_check_batch_reports(wildcards, "captp")
     output:
         report=(
-            "results/captp/{peptide_set}/"
+            "results/tox_check/captp/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_captp.csv"
         ),
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python code/merge_csv_reports.py \
@@ -289,24 +289,24 @@ rule build_toxicity_summary:
             "clusters_{peptide_set}_rep_seq.fasta"
         ),
         toxinpred3=(
-            "results/toxinpred3/{peptide_set}/"
+            "results/tox_check/toxinpred3/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxinpred3.csv"
         ),
         toxteller=(
-            "results/toxteller/{peptide_set}/"
+            "results/tox_check/toxteller/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxteller.csv"
         ),
         captp=(
-            "results/captp/{peptide_set}/"
+            "results/tox_check/captp/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_captp.csv"
         ),
     output:
         summary=(
-            "results/toxicity_summary/{peptide_set}/"
+            "results/tox_check/toxicity_summary/{peptide_set}/"
             "clusters_{peptide_set}_toxicity_summary.csv"
         ),
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python code/tox_check/build_toxicity_summary.py \

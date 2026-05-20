@@ -96,10 +96,16 @@ clone them during normal workflow execution.
 Snakemake creates conda environments from:
 
 - `envs/pre_processing.yml` for MMseqs2.
-- `envs/tox_check.yml` for ToxinPred3, ToxTeller, and CAPTP.
+- `envs/tox_check/toxinpred3_captp.yml` for ToxinPred3, CAPTP, and toxicity
+  summary helpers.
+- `envs/tox_check/toxteller.yml` for ToxTeller with its older model-compatible
+  scikit-learn stack.
 - `envs/hemolisis_check.yml` for HemoPI2.
 
-`envs/tox_check.yml` pins `toxinpred3==1.4` and includes PyTorch for CAPTP.
+`envs/tox_check/toxinpred3_captp.yml` pins `toxinpred3==1.4` and includes
+PyTorch for CAPTP.
+`envs/tox_check/toxteller.yml` follows the bundled ToxTeller requirements so
+its pickle models load with the expected scikit-learn version.
 `envs/hemolisis_check.yml` installs HemoPI2 from pip.
 
 ## Outputs
@@ -107,9 +113,9 @@ Snakemake creates conda environments from:
 Batch FASTA files:
 
 ```text
-results/batches/tox_check/{peptide_set}/batch_{batch_id}.fasta
-results/batches/toxteller/{peptide_set}/batch_{batch_id}.fasta
-results/batches/captp/{peptide_set}/batch_{batch_id}.fasta
+results/pre_processing/batches/tox_check/{peptide_set}/batch_{batch_id}.fasta
+results/pre_processing/batches/toxteller/{peptide_set}/batch_{batch_id}.fasta
+results/pre_processing/batches/captp/{peptide_set}/batch_{batch_id}.fasta
 ```
 
 MMseqs2 representative sequences:
@@ -121,38 +127,38 @@ data/curated_md-lais/mmseqs2/{peptide_set}/clusters_{peptide_set}_rep_seq.fasta
 ToxinPred3 report:
 
 ```text
-results/toxinpred3/{peptide_set}/clusters_{peptide_set}_rep_seq_toxinpred3.csv
+results/tox_check/toxinpred3/{peptide_set}/clusters_{peptide_set}_rep_seq_toxinpred3.csv
 ```
 
 ToxTeller report:
 
 ```text
-results/toxteller/{peptide_set}/clusters_{peptide_set}_rep_seq_toxteller.csv
+results/tox_check/toxteller/{peptide_set}/clusters_{peptide_set}_rep_seq_toxteller.csv
 ```
 
 CAPTP report:
 
 ```text
-results/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv
+results/tox_check/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv
 ```
 
 Combined toxicity summary:
 
 ```text
-results/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv
+results/tox_check/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv
 ```
 
 HemoPI2 reports:
 
 ```text
-results/hemopi2_classification/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_classification.csv
-results/hemopi2_regression/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_regression.csv
+results/hemo_check/hemopi2_classification/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_classification.csv
+results/hemo_check/hemopi2_regression/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_regression.csv
 ```
 
 Known completed output:
 
 ```text
-results/toxinpred3/25_50/clusters_25_50_rep_seq_toxinpred3.csv
+results/tox_check/toxinpred3/25_50/clusters_25_50_rep_seq_toxinpred3.csv
 ```
 
 ## Notes

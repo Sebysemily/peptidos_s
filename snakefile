@@ -33,28 +33,28 @@ PRE_PROCESSING_TARGETS = [
 
 TOX_CHECK_TARGETS = [
     *expand(
-        "results/toxinpred3/{peptide_set}/clusters_{peptide_set}_rep_seq_toxinpred3.csv",
+        "results/tox_check/toxinpred3/{peptide_set}/clusters_{peptide_set}_rep_seq_toxinpred3.csv",
         peptide_set=PEPTIDE_SETS,
     )
 ]
 
 TOXTELLER_TARGETS = [
     *expand(
-        "results/toxteller/{peptide_set}/clusters_{peptide_set}_rep_seq_toxteller.csv",
+        "results/tox_check/toxteller/{peptide_set}/clusters_{peptide_set}_rep_seq_toxteller.csv",
         peptide_set=PEPTIDE_SETS,
     )
 ]
 
 CAPTP_TARGETS = [
     *expand(
-        "results/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv",
+        "results/tox_check/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv",
         peptide_set=PEPTIDE_SETS,
     )
 ]
 
 TOXICITY_SUMMARY_TARGETS = [
     *expand(
-        "results/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv",
+        "results/tox_check/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv",
         peptide_set=PEPTIDE_SETS,
     )
 ]
@@ -62,14 +62,14 @@ TOXICITY_SUMMARY_TARGETS = [
 HEMOPI2_TARGETS = [
     *expand(
         (
-            "results/hemopi2_classification/{peptide_set}/"
+            "results/hemo_check/hemopi2_classification/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_hemopi2_classification.csv"
         ),
         peptide_set=PEPTIDE_SETS,
     ),
     *expand(
         (
-            "results/hemopi2_regression/{peptide_set}/"
+            "results/hemo_check/hemopi2_regression/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_hemopi2_regression.csv"
         ),
         peptide_set=PEPTIDE_SETS,
@@ -86,4 +86,5 @@ rule all:
             + TOXTELLER_TARGETS
             + CAPTP_TARGETS
             + TOXICITY_SUMMARY_TARGETS
+            + HEMOPI2_TARGETS
         )

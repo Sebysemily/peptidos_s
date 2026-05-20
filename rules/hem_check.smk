@@ -1,20 +1,34 @@
 THREADS = int(config.get("max_threads", 8))
 
 
+def hem_check_batch_reports(wildcards, tool):
+    batch_dir = tox_check_batch_dir(wildcards)
+    batch_ids = glob_wildcards(
+        f"{batch_dir}/batch_{{batch_id}}.fasta"
+    ).batch_id
+    batch_ids = sorted(batch_ids, key=int)
+    return expand(
+        "results/hemo_check/{tool}/{peptide_set}/batches/batch_{batch_id}.csv",
+        tool=tool,
+        peptide_set=wildcards.peptide_set,
+        batch_id=batch_ids,
+    )
+
+
 rule hemopi2_classification_batch:
     input:
         batch_dir=tox_check_batch_dir,
     output:
         report=(
-            "results/hemopi2_classification/{peptide_set}/batches/"
+            "results/hemo_check/hemopi2_classification/{peptide_set}/batches/"
             "batch_{batch_id}.csv"
         ),
     params:
         fasta=lambda wildcards, input: (
             f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
         ),
-        workdir="results/hemopi2_classification/{peptide_set}/work/batch_{batch_id}",
-        input_fasta="results/hemopi2_classification/{peptide_set}/work/batch_{batch_id}/input.fasta",
+        workdir="results/hemo_check/hemopi2_classification/{peptide_set}/work/batch_{batch_id}",
+        input_fasta="results/hemo_check/hemopi2_classification/{peptide_set}/work/batch_{batch_id}/input.fasta",
         report_name="batch_{batch_id}.csv",
     threads: THREADS
     conda:
@@ -46,16 +60,16 @@ rule hemopi2_classification_batch:
 
 rule merge_hemopi2_classification_batches:
     input:
-        lambda wildcards: tox_check_batch_reports(
+        lambda wildcards: hem_check_batch_reports(
             wildcards, "hemopi2_classification"
         )
     output:
         report=(
-            "results/hemopi2_classification/{peptide_set}/"
+            "results/hemo_check/hemopi2_classification/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_hemopi2_classification.csv"
         ),
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python code/merge_csv_reports.py \
@@ -69,15 +83,15 @@ rule hemopi2_regression_batch:
         batch_dir=tox_check_batch_dir,
     output:
         report=(
-            "results/hemopi2_regression/{peptide_set}/batches/"
+            "results/hemo_check/hemopi2_regression/{peptide_set}/batches/"
             "batch_{batch_id}.csv"
         ),
     params:
         fasta=lambda wildcards, input: (
             f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
         ),
-        workdir="results/hemopi2_regression/{peptide_set}/work/batch_{batch_id}",
-        input_fasta="results/hemopi2_regression/{peptide_set}/work/batch_{batch_id}/input.fasta",
+        workdir="results/hemo_check/hemopi2_regression/{peptide_set}/work/batch_{batch_id}",
+        input_fasta="results/hemo_check/hemopi2_regression/{peptide_set}/work/batch_{batch_id}/input.fasta",
         report_name="batch_{batch_id}.csv",
     threads: THREADS
     conda:
@@ -108,16 +122,16 @@ rule hemopi2_regression_batch:
 
 rule merge_hemopi2_regression_batches:
     input:
-        lambda wildcards: tox_check_batch_reports(
+        lambda wildcards: hem_check_batch_reports(
             wildcards, "hemopi2_regression"
         )
     output:
         report=(
-            "results/hemopi2_regression/{peptide_set}/"
+            "results/hemo_check/hemopi2_regression/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_hemopi2_regression.csv"
         ),
     conda:
-        "../envs/tox_check.yml"
+        "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python code/merge_csv_reports.py \

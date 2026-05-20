@@ -1,0 +1,16 @@
+name: peptidos-toxinpred3-captp
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy<2
+  - pandas
+  - scikit-learn=1.2.2
+  - setuptools<81
+  - joblib
+  - pytorch
+  - pip:
+      - toxinpred3==1.4
