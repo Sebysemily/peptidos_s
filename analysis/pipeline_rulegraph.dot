@@ -1,0 +1,40 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
+    edge[penwidth=2, color=grey];
+	1[label = "check_external_resources", color = "0.10 0.6 0.85", style="rounded"];
+	2[label = "mmseqs_easy_cluster", color = "0.48 0.6 0.85", style="rounded"];
+	3[label = "merge_toxinpred3_batches", color = "0.41 0.6 0.85", style="rounded"];
+	4[label = "split_tox_check_batches", color = "0.54 0.6 0.85", style="rounded"];
+	5[label = "merge_toxteller_batches", color = "0.44 0.6 0.85", style="rounded"];
+	6[label = "split_toxteller_batches", color = "0.57 0.6 0.85", style="rounded"];
+	7[label = "merge_captp_batches", color = "0.29 0.6 0.85", style="rounded"];
+	8[label = "build_toxicity_summary", color = "0.03 0.6 0.85", style="rounded"];
+	9[label = "filter_non_toxic_fasta", color = "0.16 0.6 0.85", style="rounded"];
+	10[label = "split_non_toxic_batches", color = "0.51 0.6 0.85", style="rounded"];
+	11[label = "merge_hemopi2_classification_batches", color = "0.32 0.6 0.85", style="rounded"];
+	12[label = "merge_hemopi2_regression_batches", color = "0.35 0.6 0.85", style="rounded"];
+	13[label = "merge_macrel_batches", color = "0.38 0.6 0.85", style="rounded"];
+	4 -> 3
+	2 -> 4
+	6 -> 5
+	2 -> 6
+	4 -> 7
+	3 -> 8
+	7 -> 8
+	2 -> 8
+	5 -> 8
+	8 -> 9
+	2 -> 9
+	9 -> 10
+	10 -> 11
+	10 -> 12
+	10 -> 13
+	declared_1[label = "captp_batch", color = "0.00 0.0 0.70", style="rounded,dashed"];
+	declared_2[label = "filter_captp_batch", color = "0.00 0.0 0.70", style="rounded,dashed"];
+	declared_3[label = "hemopi2_classification_batch", color = "0.00 0.0 0.70", style="rounded,dashed"];
+	declared_4[label = "hemopi2_regression_batch", color = "0.00 0.0 0.70", style="rounded,dashed"];
+	declared_5[label = "macrel_batch", color = "0.00 0.0 0.70", style="rounded,dashed"];
+	declared_6[label = "toxinpred3_batch", color = "0.00 0.0 0.70", style="rounded,dashed"];
+	declared_7[label = "toxteller_batch", color = "0.00 0.0 0.70", style="rounded,dashed"];
+}            

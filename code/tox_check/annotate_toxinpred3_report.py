@@ -6,7 +6,9 @@ from pathlib import Path
 
 def read_mapping(path):
     with open(path, "r", encoding="utf-8", newline="") as handle:
-        return {row["tox_index"]: row for row in csv.DictReader(handle)}
+        reader = csv.DictReader(handle)
+        id_field = "indexed_id" if "indexed_id" in (reader.fieldnames or []) else "tox_index"
+        return {row[id_field]: row for row in reader}
 
 
 def main():

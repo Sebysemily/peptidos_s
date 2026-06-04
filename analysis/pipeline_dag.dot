@@ -1,0 +1,60 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
+    edge[penwidth=2, color=grey];
+	1[label = "check_external_resources", color = "0.10 0.6 0.85", style="rounded,dashed"];
+	2[label = "mmseqs_easy_cluster\npeptide_set: 25_50", color = "0.48 0.6 0.85", style="rounded"];
+	3[label = "mmseqs_easy_cluster\npeptide_set: 10_25", color = "0.48 0.6 0.85", style="rounded"];
+	4[label = "merge_toxinpred3_batches", color = "0.41 0.6 0.85", style="rounded"];
+	5[label = "split_tox_check_batches", color = "0.54 0.6 0.85", style="rounded"];
+	6[label = "merge_toxinpred3_batches", color = "0.41 0.6 0.85", style="rounded"];
+	7[label = "split_tox_check_batches", color = "0.54 0.6 0.85", style="rounded"];
+	8[label = "merge_toxteller_batches", color = "0.44 0.6 0.85", style="rounded"];
+	9[label = "split_toxteller_batches", color = "0.57 0.6 0.85", style="rounded"];
+	10[label = "merge_toxteller_batches", color = "0.44 0.6 0.85", style="rounded"];
+	11[label = "split_toxteller_batches", color = "0.57 0.6 0.85", style="rounded"];
+	12[label = "merge_captp_batches", color = "0.29 0.6 0.85", style="rounded"];
+	13[label = "merge_captp_batches", color = "0.29 0.6 0.85", style="rounded"];
+	14[label = "build_toxicity_summary", color = "0.03 0.6 0.85", style="rounded"];
+	15[label = "build_toxicity_summary", color = "0.03 0.6 0.85", style="rounded"];
+	16[label = "filter_non_toxic_fasta", color = "0.16 0.6 0.85", style="rounded"];
+	17[label = "filter_non_toxic_fasta", color = "0.16 0.6 0.85", style="rounded"];
+	18[label = "split_non_toxic_batches", color = "0.51 0.6 0.85", style="rounded"];
+	19[label = "split_non_toxic_batches", color = "0.51 0.6 0.85", style="rounded"];
+	20[label = "merge_hemopi2_classification_batches", color = "0.32 0.6 0.85", style="rounded"];
+	21[label = "merge_hemopi2_classification_batches", color = "0.32 0.6 0.85", style="rounded"];
+	22[label = "merge_hemopi2_regression_batches", color = "0.35 0.6 0.85", style="rounded"];
+	23[label = "merge_hemopi2_regression_batches", color = "0.35 0.6 0.85", style="rounded"];
+	24[label = "merge_macrel_batches", color = "0.38 0.6 0.85", style="rounded"];
+	25[label = "merge_macrel_batches", color = "0.38 0.6 0.85", style="rounded"];
+	5 -> 4
+	2 -> 5
+	7 -> 6
+	3 -> 7
+	9 -> 8
+	2 -> 9
+	11 -> 10
+	3 -> 11
+	5 -> 12
+	7 -> 13
+	2 -> 14
+	4 -> 14
+	8 -> 14
+	12 -> 14
+	3 -> 15
+	6 -> 15
+	10 -> 15
+	13 -> 15
+	2 -> 16
+	14 -> 16
+	3 -> 17
+	15 -> 17
+	16 -> 18
+	17 -> 19
+	18 -> 20
+	19 -> 21
+	18 -> 22
+	19 -> 23
+	18 -> 24
+	19 -> 25
+}            

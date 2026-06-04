@@ -1,0 +1,11 @@
+name: peptidos-hem-check-hepad
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - pip:
+      # Snakemake copies this yaml into .snakemake/conda/, so the path must
+      # reach back to the project envs/ directory from there.
+      - -r ../../envs/hem_check/hepad-requirements.txt

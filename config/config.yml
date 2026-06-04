@@ -7,6 +7,17 @@ batching:
   "25_50": 1
   "10_25": 19
 
+batch_fasta_root: "data/derived/batches"
+non_toxic_fasta_root: "data/derived/non_toxic"
+
+# -----------------------------
+# Hemo check: HEPAD datasets
+# Available: Hmp1, Hmp2, Hmp3, Hmpm
+# -----------------------------
+hepad_datasets:
+  - Hmp1
+  - Hmpm
+
 # -----------------------------
 # Curated FASTA inputs
 # -----------------------------

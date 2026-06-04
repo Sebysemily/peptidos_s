@@ -100,22 +100,25 @@ Snakemake creates conda environments from:
   summary helpers.
 - `envs/tox_check/toxteller.yml` for ToxTeller with its older model-compatible
   scikit-learn stack.
-- `envs/hemolisis_check.yml` for HemoPI2.
+- `envs/hem_check/hemopi2.yml` for HemoPI2.
+- `envs/hem_check/macrel.yml` for Macrel.
 
 `envs/tox_check/toxinpred3_captp.yml` pins `toxinpred3==1.4` and includes
 PyTorch for CAPTP.
 `envs/tox_check/toxteller.yml` follows the bundled ToxTeller requirements so
 its pickle models load with the expected scikit-learn version.
-`envs/hemolisis_check.yml` installs HemoPI2 from pip.
+`envs/hem_check/hemopi2.yml` installs HemoPI2 from pip. Macrel uses a separate
+environment because its Bioconda dependency stack conflicts with the modern
+Python/PyTorch/transformers stack required by HemoPI2.
 
 ## Outputs
 
-Batch FASTA files:
+Derived batch FASTA inputs:
 
 ```text
-results/pre_processing/batches/tox_check/{peptide_set}/batch_{batch_id}.fasta
-results/pre_processing/batches/toxteller/{peptide_set}/batch_{batch_id}.fasta
-results/pre_processing/batches/captp/{peptide_set}/batch_{batch_id}.fasta
+data/derived/batches/tox_check/{peptide_set}/batch_{batch_id}.fasta
+data/derived/batches/toxteller/{peptide_set}/batch_{batch_id}.fasta
+data/derived/batches/captp/{peptide_set}/batch_{batch_id}.fasta
 ```
 
 MMseqs2 representative sequences:
@@ -148,11 +151,25 @@ Combined toxicity summary:
 results/tox_check/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv
 ```
 
+Non-toxic derived FASTA inputs:
+
+```text
+data/derived/non_toxic/{peptide_set}/clusters_{peptide_set}_rep_seq_non_toxic.fasta
+data/derived/non_toxic/{peptide_set}/batches/batch_{batch_id}.fasta
+data/derived/non_toxic/{peptide_set}/batches/batch_{batch_id}.mapping.csv
+```
+
 HemoPI2 reports:
 
 ```text
 results/hemo_check/hemopi2_classification/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_classification.csv
 results/hemo_check/hemopi2_regression/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_regression.csv
+```
+
+Macrel report:
+
+```text
+results/hemo_check/macrel/{peptide_set}/clusters_{peptide_set}_rep_seq_macrel.csv
 ```
 
 Known completed output:
@@ -179,6 +196,10 @@ results/tox_check/toxinpred3/25_50/clusters_25_50_rep_seq_toxinpred3.csv
   (`-m 2`) and regression reports HC50. HemoPI2 rules live in
   `rules/hem_check.smk`; future HemoPI2 helper code should live under
   `code/hem_check/`.
+- HemoPI2 and Macrel run on indexed non-toxic derived FASTA batches under
+  `data/derived/non_toxic/{peptide_set}/batches`. Each batch has a sibling
+  `batch_{batch_id}.mapping.csv` with `indexed_id`, `peptide_id`, `sequence`,
+  and `length`, which is used to restore original peptide IDs in final reports.
 - CSV batch merging uses the shared helper `code/merge_csv_reports.py`.
 - External ToxTeller/CAPTP versions are fixed by the submodule commits recorded
   in the parent repository. To restore them, run

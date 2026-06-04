@@ -1,0 +1,9 @@
+name: peptidos-hem-check-macrel
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - macrel
+  - onnxruntime>=1.11

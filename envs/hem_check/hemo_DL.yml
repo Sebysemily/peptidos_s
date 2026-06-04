@@ -1,0 +1,13 @@
+name: peptidos-hem-check-hemo_DL
+channels:
+  - conda-forge
+  - pytorch
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - pip:
+      # Snakemake copies this yaml into .snakemake/conda/, so the path must
+      # reach back to the project envs/ directory from there.
+      - -r ../../envs/hem_check/hemo_DL-requirements.txt

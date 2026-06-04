@@ -14,15 +14,16 @@ wildcard_constraints:
 
 checkpoint split_tox_check_batches:
     input:
-        script="code/tox_check/split_fasta_batches.py",
+        script=ancient("code/split_fasta_batches.py"),
         rep_seq=(
             "data/curated_md-lais/mmseqs2/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq.fasta"
         ),
     output:
-        directory("results/pre_processing/batches/tox_check/{peptide_set}"),
+        directory(f"{TOX_CHECK_BATCH_DIR}/{{peptide_set}}"),
     params:
         n_batches=lambda wildcards: n_batches(wildcards.peptide_set),
+        id_prefix=lambda wildcards: f"tox_check_{wildcards.peptide_set}",
     conda:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
@@ -30,7 +31,8 @@ checkpoint split_tox_check_batches:
         python {input.script} \
             --input {input.rep_seq} \
             --outdir {output} \
-            --n-batches {params.n_batches}
+            --n-batches {params.n_batches} \
+            --id-prefix {params.id_prefix}
         """
 
 
@@ -40,29 +42,42 @@ def tox_check_batch_dir(wildcards):
     ).output[0]
 
 
+def tox_check_batch_fasta(wildcards):
+    return ancient(
+        f"{tox_check_batch_dir(wildcards)}/batch_{wildcards.batch_id}.fasta"
+    )
+
+
+def tox_check_batch_mapping(wildcards):
+    return ancient(
+        f"{tox_check_batch_dir(wildcards)}/batch_{wildcards.batch_id}.mapping.csv"
+    )
+
+
 def tox_check_batch_reports(wildcards, tool):
     batch_dir = tox_check_batch_dir(wildcards)
     batch_ids = glob_wildcards(
         f"{batch_dir}/batch_{{batch_id}}.fasta"
     ).batch_id
     batch_ids = sorted(batch_ids, key=int)
-    return expand(
+    reports = expand(
         "results/tox_check/{tool}/{peptide_set}/batches/batch_{batch_id}.csv",
         tool=tool,
         peptide_set=wildcards.peptide_set,
         batch_id=batch_ids,
     )
+    return [ancient(report) for report in reports]
 
 
 checkpoint split_toxteller_batches:
     input:
-        script="code/tox_check/split_fasta_batches.py",
+        script=ancient("code/split_fasta_batches.py"),
         rep_seq=(
             "data/curated_md-lais/mmseqs2/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq.fasta"
         ),
     output:
-        directory("results/pre_processing/batches/toxteller/{peptide_set}"),
+        directory(f"{TOXTELLER_BATCH_DIR}/{{peptide_set}}"),
     params:
         max_sequences_per_batch=9500,
     conda:
@@ -82,37 +97,42 @@ def toxteller_batch_dir(wildcards):
     ).output[0]
 
 
+def toxteller_batch_fasta(wildcards):
+    return ancient(
+        f"{toxteller_batch_dir(wildcards)}/batch_{wildcards.batch_id}.fasta"
+    )
+
+
 def toxteller_batch_reports(wildcards):
     batch_dir = toxteller_batch_dir(wildcards)
     batch_ids = glob_wildcards(
         f"{batch_dir}/batch_{{batch_id}}.fasta"
     ).batch_id
     batch_ids = sorted(batch_ids, key=int)
-    return expand(
+    reports = expand(
         "results/tox_check/toxteller/{peptide_set}/batches/batch_{batch_id}.csv",
         peptide_set=wildcards.peptide_set,
         batch_id=batch_ids,
     )
+    return [ancient(report) for report in reports]
 
 
 rule toxinpred3_batch:
     input:
-        batch_dir=tox_check_batch_dir,
+        fasta=tox_check_batch_fasta,
+        mapping=tox_check_batch_mapping,
     output:
         report=(
             "results/tox_check/toxinpred3/{peptide_set}/batches/"
             "batch_{batch_id}.csv"
         ),
     params:
-        fasta=lambda wildcards, input: (
-            f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
-        ),
         outdir="results/tox_check/toxinpred3/{peptide_set}/batches",
         workdir="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}",
-        indexed_fasta="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_indexed.fasta",
-        mapping="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}/input_mapping.csv",
         raw_report="results/tox_check/toxinpred3/{peptide_set}/work/batch_{batch_id}/raw_toxinpred3.csv",
-    threads: THREADS
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb
     conda:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
@@ -120,12 +140,7 @@ rule toxinpred3_batch:
         mkdir -p {params.outdir}
         rm -rf {params.workdir}
         mkdir -p {params.workdir}
-        python code/tox_check/prepare_toxinpred3_input.py \
-            --input {params.fasta} \
-            --output-fasta {params.indexed_fasta} \
-            --mapping {params.mapping} \
-            --prefix "{wildcards.peptide_set}_{wildcards.batch_id}"
-        input_fasta="$(realpath {params.indexed_fasta})"
+        input_fasta="$(realpath {input.fasta})"
         raw_report="$(realpath -m {params.raw_report})"
         output_report="$(realpath -m {output.report})"
         cd {params.workdir}
@@ -133,7 +148,7 @@ rule toxinpred3_batch:
         cd -
         python code/tox_check/annotate_toxinpred3_report.py \
             --raw-report "$raw_report" \
-            --mapping {params.mapping} \
+            --mapping {input.mapping} \
             --output "$output_report"
         """
 
@@ -146,6 +161,9 @@ rule merge_toxinpred3_batches:
             "results/tox_check/toxinpred3/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxinpred3.csv"
         ),
+        validated=touch(
+            "results/tox_check/toxinpred3/{peptide_set}/.batches_validated"
+        ),
     conda:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
@@ -157,26 +175,25 @@ rule merge_toxinpred3_batches:
 
 rule toxteller_batch:
     input:
-        resources_checked="results/setup/.external_resources_checked",
-        batch_dir=toxteller_batch_dir,
+        resources_checked=ancient(".snakemake/checks/external_resources_checked"),
+        fasta=toxteller_batch_fasta,
     output:
         report=(
             "results/tox_check/toxteller/{peptide_set}/batches/"
             "batch_{batch_id}.csv"
         ),
     params:
-        fasta=lambda wildcards, input: (
-            f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
-        ),
         outdir="results/tox_check/toxteller/{peptide_set}/batches",
         tool_dir=TOXTELLER_PROGRAM_DIR,
-    threads: THREADS
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb
     conda:
         "../envs/tox_check/toxteller.yml"
     shell:
         r"""
         mkdir -p {params.outdir}
-        input_fasta="$(realpath {params.fasta})"
+        input_fasta="$(realpath {input.fasta})"
         output_report="$(realpath -m {output.report})"
         cd {params.tool_dir}/program_resource
         python toxteller.py "$input_fasta"
@@ -192,6 +209,9 @@ rule merge_toxteller_batches:
             "results/tox_check/toxteller/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxteller.csv"
         ),
+        validated=touch(
+            "results/tox_check/toxteller/{peptide_set}/.batches_validated"
+        ),
     conda:
         "../envs/tox_check/toxteller.yml"
     shell:
@@ -204,27 +224,22 @@ rule merge_toxteller_batches:
 
 rule filter_captp_batch:
     input:
-        batch_dir=tox_check_batch_dir,
+        fasta=tox_check_batch_fasta,
     output:
         fasta=(
-            "results/pre_processing/batches/captp/{peptide_set}/"
-            "batch_{batch_id}.fasta"
+            f"{CAPTP_BATCH_DIR}/{{peptide_set}}/batch_{{batch_id}}.fasta"
         ),
         stats=(
-            "results/pre_processing/batches/captp/{peptide_set}/"
-            "batch_{batch_id}.stats"
+            f"{CAPTP_BATCH_DIR}/{{peptide_set}}/batch_{{batch_id}}.stats"
         ),
     params:
-        fasta=lambda wildcards, input: (
-            f"{input.batch_dir}/batch_{wildcards.batch_id}.fasta"
-        ),
         max_sequence_length=49,
     conda:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
         python code/tox_check/filter_fasta_by_length.py \
-            --input {params.fasta} \
+            --input {input.fasta} \
             --output {output.fasta} \
             --stats {output.stats} \
             --min-length 1 \
@@ -234,8 +249,10 @@ rule filter_captp_batch:
 
 rule captp_batch:
     input:
-        resources_checked="results/setup/.external_resources_checked",
-        fasta="results/pre_processing/batches/captp/{peptide_set}/batch_{batch_id}.fasta",
+        resources_checked=ancient(".snakemake/checks/external_resources_checked"),
+        fasta=ancient(
+            f"{CAPTP_BATCH_DIR}/{{peptide_set}}/batch_{{batch_id}}.fasta"
+        ),
     output:
         report=(
             "results/tox_check/captp/{peptide_set}/batches/"
@@ -245,7 +262,9 @@ rule captp_batch:
         outdir="results/tox_check/captp/{peptide_set}/batches",
         tool_dir=CAPTP_PROGRAM_DIR,
         report_name="batch_{batch_id}.csv",
-    threads: THREADS
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb
     conda:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
@@ -272,6 +291,9 @@ rule merge_captp_batches:
             "results/tox_check/captp/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_captp.csv"
         ),
+        validated=touch(
+            "results/tox_check/captp/{peptide_set}/.batches_validated"
+        ),
     conda:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
@@ -284,19 +306,20 @@ rule merge_captp_batches:
 
 rule build_toxicity_summary:
     input:
+        script="code/tox_check/build_toxicity_summary.py",
         fasta=(
             "data/curated_md-lais/mmseqs2/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq.fasta"
         ),
-        toxinpred3=(
+        toxinpred3=ancient(
             "results/tox_check/toxinpred3/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxinpred3.csv"
         ),
-        toxteller=(
+        toxteller=ancient(
             "results/tox_check/toxteller/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_toxteller.csv"
         ),
-        captp=(
+        captp=ancient(
             "results/tox_check/captp/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_captp.csv"
         ),
@@ -309,10 +332,84 @@ rule build_toxicity_summary:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
         r"""
-        python code/tox_check/build_toxicity_summary.py \
+        python {input.script} \
             --fasta {input.fasta} \
             --toxinpred3 {input.toxinpred3} \
             --toxteller {input.toxteller} \
             --captp {input.captp} \
             --output-csv {output.summary}
         """
+
+
+rule filter_non_toxic_fasta:
+    input:
+        script="code/tox_check/filter_fasta_by_toxicity_summary.py",
+        fasta=(
+            "data/curated_md-lais/mmseqs2/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq.fasta"
+        ),
+        summary=ancient(
+            "results/tox_check/toxicity_summary/{peptide_set}/"
+            "clusters_{peptide_set}_toxicity_summary.csv"
+        ),
+    output:
+        fasta=(
+            f"{NON_TOXIC_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_toxic.fasta"
+        ),
+        stats=(
+            f"{NON_TOXIC_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_toxic.stats"
+        ),
+    conda:
+        "../envs/tox_check/toxinpred3_captp.yml"
+    shell:
+        r"""
+        python {input.script} \
+            --fasta {input.fasta} \
+            --summary {input.summary} \
+            --output-fasta {output.fasta} \
+            --stats {output.stats}
+        """
+
+
+checkpoint split_non_toxic_batches:
+    input:
+        script="code/split_fasta_batches.py",
+        fasta=ancient(
+            f"{NON_TOXIC_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_toxic.fasta"
+        ),
+    output:
+        directory(f"{NON_TOXIC_FASTA_ROOT}/{{peptide_set}}/batches"),
+    params:
+        n_batches=lambda wildcards: n_batches(wildcards.peptide_set),
+        id_prefix=lambda wildcards: f"non_toxic_{wildcards.peptide_set}",
+    conda:
+        "../envs/tox_check/toxinpred3_captp.yml"
+    shell:
+        r"""
+        python {input.script} \
+            --input {input.fasta} \
+            --outdir {output} \
+            --n-batches {params.n_batches} \
+            --id-prefix {params.id_prefix}
+        """
+
+
+def non_toxic_batch_dir(wildcards):
+    return checkpoints.split_non_toxic_batches.get(
+        peptide_set=wildcards.peptide_set
+    ).output[0]
+
+
+def non_toxic_batch_fasta(wildcards):
+    return ancient(
+        f"{non_toxic_batch_dir(wildcards)}/batch_{wildcards.batch_id}.fasta"
+    )
+
+
+def non_toxic_batch_mapping(wildcards):
+    return ancient(
+        f"{non_toxic_batch_dir(wildcards)}/batch_{wildcards.batch_id}.mapping.csv"
+    )

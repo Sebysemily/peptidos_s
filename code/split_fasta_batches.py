@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import csv
 import os
 import math
 import shutil
@@ -39,12 +40,44 @@ def sequence_length(seq_lines):
     return sum(len(line.strip()) for line in seq_lines)
 
 
-def write_records(path, records):
+def sequence_text(seq_lines):
+    return "".join(line.strip() for line in seq_lines)
+
+
+def write_records(path, records, batch_number=None, id_prefix=None, mapping_path=None):
+    mapping_handle = None
+    writer = None
+    if id_prefix is not None:
+        mapping_handle = open(mapping_path, "w", encoding="utf-8", newline="")
+        writer = csv.DictWriter(
+            mapping_handle,
+            fieldnames=["indexed_id", "peptide_id", "sequence", "length"],
+        )
+        writer.writeheader()
+
     with open(path, "w", encoding="utf-8") as handle:
-        for header, seq_lines in records:
-            handle.write(f"{header}\n")
+        for record_index, (header, seq_lines) in enumerate(records, start=1):
+            peptide_id = header[1:]
+            sequence = sequence_text(seq_lines)
+            if id_prefix is None:
+                output_header = header
+            else:
+                output_header = f">{id_prefix}_{batch_number}_{record_index}"
+                writer.writerow(
+                    {
+                        "indexed_id": output_header[1:],
+                        "peptide_id": peptide_id,
+                        "sequence": sequence,
+                        "length": len(sequence),
+                    }
+                )
+
+            handle.write(f"{output_header}\n")
             for line in seq_lines:
                 handle.write(f"{line}\n")
+
+    if mapping_handle is not None:
+        mapping_handle.close()
 
 
 def batch_bounds(n_records, n_batches):
@@ -69,6 +102,13 @@ def main():
     )
     parser.add_argument("--input", required=True, help="Input FASTA file")
     parser.add_argument("--outdir", required=True, help="Output batch directory")
+    parser.add_argument(
+        "--id-prefix",
+        help=(
+            "Replace FASTA headers with internal IDs using this prefix and "
+            "write batch_{n}.mapping.csv files."
+        ),
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument(
         "--n-batches", type=int, help="Number of near-equal FASTA batches"
@@ -105,14 +145,23 @@ def main():
     outdir.mkdir(parents=True, exist_ok=True)
 
     for batch_number, (start, end) in enumerate(bounds, start=1):
-        write_records(outdir / f"batch_{batch_number}.fasta", records[start:end])
+        write_records(
+            outdir / f"batch_{batch_number}.fasta",
+            records[start:end],
+            batch_number=batch_number,
+            id_prefix=args.id_prefix,
+            mapping_path=outdir / f"batch_{batch_number}.mapping.csv",
+        )
 
     complete = outdir / ".complete"
     complete.write_text(
-        f"input={os.path.abspath(args.input)}\n"
-        f"records={len(records)}\n"
-        f"skipped_empty={skipped_empty}\n"
-        f"batches={n_batches}\n",
+        (
+            f"input={os.path.abspath(args.input)}\n"
+            f"records={len(records)}\n"
+            f"skipped_empty={skipped_empty}\n"
+            f"batches={n_batches}\n"
+            f"id_prefix={args.id_prefix or ''}\n"
+        ),
         encoding="utf-8",
     )
 

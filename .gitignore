@@ -13,14 +13,22 @@ resources/***
 !resources/
 !resources/ToxTeller
 !resources/CAPTP
+!resources/HEPAD
+!resources/HemoDL
 tmp_rf_full_concat/**
 *.pdf
 .github/**
 .vscode/***
 .vscode/*
 .vscode/**
+# Python bytecode and caches
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 Sequence_1
 seq.aac
 seq.dpc

@@ -1,0 +1,343 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
+    edge[penwidth=2, color=grey];
+0 [ shape=none, margin=0, label=<<table border="2" color="#D95757" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">all</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">.snakemake/checks/external_resources_checked</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/10_25/clusters_10_25_cluster.tsv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/10_25/clusters_10_25_rep_seq.fasta</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/25_50/clusters_25_50_cluster.tsv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/25_50/clusters_25_50_rep_seq.fasta</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/10_25/batches</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/10_25/clusters_10_25_rep_seq_non_toxic.fasta</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/25_50/batches</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/25_50/clusters_25_50_rep_seq_non_toxic.fasta</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/hemopi2_classification/10_25/clusters_10_25_rep_seq_hemopi2_classification.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/hemopi2_classification/25_50/clusters_25_50_rep_seq_hemopi2_classification.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/hemopi2_regression/10_25/clusters_10_25_rep_seq_hemopi2_regression.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/hemopi2_regression/25_50/clusters_25_50_rep_seq_hemopi2_regression.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/macrel/10_25/clusters_10_25_rep_seq_macrel.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/macrel/25_50/clusters_25_50_rep_seq_macrel.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/captp/10_25/.batches_validated</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/captp/10_25/clusters_10_25_rep_seq_captp.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/captp/25_50/.batches_validated</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/captp/25_50/clusters_25_50_rep_seq_captp.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxicity_summary/10_25/clusters_10_25_toxicity_summary.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxicity_summary/25_50/clusters_25_50_toxicity_summary.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxinpred3/10_25/.batches_validated</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxinpred3/10_25/clusters_10_25_rep_seq_toxinpred3.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxinpred3/25_50/.batches_validated</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxinpred3/25_50/clusters_25_50_rep_seq_toxinpred3.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxteller/10_25/.batches_validated</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxteller/10_25/clusters_10_25_rep_seq_toxteller.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxteller/25_50/.batches_validated</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxteller/25_50/clusters_25_50_rep_seq_toxteller.csv</font></td>
+</tr>
+<hr/>
+<tr><td align="right">  </td> </tr>
+</table>>]
+1 [ shape=none, margin=0, label=<<table border="2" color="#D9A157" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">check_external_resources</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left">  </td></tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">.snakemake/checks/external_resources_checked</font></td></tr>
+</table>>]
+2 [ shape=none, margin=0, label=<<table border="2" color="#57D9C6" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">mmseqs_easy_cluster</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">&lt;input function&gt;</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/{peptide_set,25_50|10_25}/clusters_{peptide_set}_cluster.tsv</font></td></tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq.fasta</font></td></tr>
+</table>>]
+3 [ shape=none, margin=0, label=<<table border="2" color="#57D995" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">merge_toxinpred3_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">&lt;input function&gt;</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxinpred3/{peptide_set,25_50|10_25}/.batches_validated</font></td></tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxinpred3/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_toxinpred3.csv</font></td></tr>
+</table>>]
+4 [ shape=none, margin=0, label=<<table border="2" color="#57BAD9" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">split_tox_check_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">code/tox_check/split_fasta_batches.py</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/{peptide_set}/clusters_{peptide_set}_rep_seq.fasta</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/batches/tox_check/{peptide_set,25_50|10_25}</font></td></tr>
+</table>>]
+5 [ shape=none, margin=0, label=<<table border="2" color="#57D9AD" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">merge_toxteller_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">&lt;input function&gt;</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxteller/{peptide_set,25_50|10_25}/.batches_validated</font></td></tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxteller/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_toxteller.csv</font></td></tr>
+</table>>]
+6 [ shape=none, margin=0, label=<<table border="2" color="#57A1D9" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">split_toxteller_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">code/tox_check/split_fasta_batches.py</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/{peptide_set}/clusters_{peptide_set}_rep_seq.fasta</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/batches/toxteller/{peptide_set,25_50|10_25}</font></td></tr>
+</table>>]
+7 [ shape=none, margin=0, label=<<table border="2" color="#7CD957" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">merge_captp_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">&lt;input function&gt;</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/captp/{peptide_set,25_50|10_25}/.batches_validated</font></td></tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/captp/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_captp.csv</font></td></tr>
+</table>>]
+8 [ shape=none, margin=0, label=<<table border="2" color="#D96F57" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">build_toxicity_summary</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">code/tox_check/build_toxicity_summary.py</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/{peptide_set}/clusters_{peptide_set}_rep_seq.fasta</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxinpred3/{peptide_set}/clusters_{peptide_set}_rep_seq_toxinpred3.csv</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxteller/{peptide_set}/clusters_{peptide_set}_rep_seq_toxteller.csv</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxicity_summary/{peptide_set,25_50|10_25}/clusters_{peptide_set}_toxicity_summary.csv</font></td></tr>
+</table>>]
+9 [ shape=none, margin=0, label=<<table border="2" color="#D9D357" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">filter_non_toxic_fasta</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">code/tox_check/filter_fasta_by_toxicity_summary.py</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/curated_md-lais/mmseqs2/{peptide_set}/clusters_{peptide_set}_rep_seq.fasta</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">results/tox_check/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_non_toxic.fasta</font></td></tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_non_toxic.stats</font></td></tr>
+</table>>]
+10 [ shape=none, margin=0, label=<<table border="2" color="#57D3D9" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">split_non_toxic_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">code/tox_check/split_fasta_batches.py</font></td>
+</tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/{peptide_set}/clusters_{peptide_set}_rep_seq_non_toxic.fasta</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">data/derived/non_toxic/{peptide_set,25_50|10_25}/batches</font></td></tr>
+</table>>]
+11 [ shape=none, margin=0, label=<<table border="2" color="#63D957" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">merge_hemopi2_classification_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">&lt;input function&gt;</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/hemopi2_classification/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_hemopi2_classification.csv</font></td></tr>
+</table>>]
+12 [ shape=none, margin=0, label=<<table border="2" color="#57D963" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">merge_hemopi2_regression_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">&lt;input function&gt;</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/hemopi2_regression/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_hemopi2_regression.csv</font></td></tr>
+</table>>]
+13 [ shape=none, margin=0, label=<<table border="2" color="#57D97C" cellspacing="3" cellborder="0">
+<tr><td>
+<b><font point-size="18">merge_macrel_batches</font></b>
+</td></tr>
+<hr/>
+<tr><td align="left"> <b><font point-size="14">&#8618; input</font></b> </td></tr>
+<tr>
+<td align="left"><font face="monospace">&lt;input function&gt;</font></td>
+</tr>
+<hr/>
+<tr><td align="right"> <b><font point-size="14">output &rarr;</font></b> </td> </tr>
+<tr>
+<td align="left"><font face="monospace">results/hemo_check/macrel/{peptide_set,25_50|10_25}/clusters_{peptide_set}_rep_seq_macrel.csv</font></td></tr>
+</table>>]
+	13 -> 0
+	10 -> 0
+	2 -> 0
+	8 -> 0
+	5 -> 0
+	3 -> 0
+	12 -> 0
+	1 -> 0
+	11 -> 0
+	9 -> 0
+	7 -> 0
+	4 -> 3
+	2 -> 4
+	6 -> 5
+	2 -> 6
+	4 -> 7
+	5 -> 8
+	2 -> 8
+	7 -> 8
+	3 -> 8
+	2 -> 9
+	8 -> 9
+	9 -> 10
+	10 -> 11
+	10 -> 12
+	10 -> 13
+}            

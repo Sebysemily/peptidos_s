@@ -65,7 +65,29 @@ def pop_sequence_row(grouped, sequence):
 
 
 def normalized_prediction(value):
-    return (value or "").strip().lower().replace("_", "-")
+    return " ".join(
+        (value or "")
+        .strip()
+        .lower()
+        .replace("_", " ")
+        .replace("-", " ")
+        .split()
+    )
+
+
+def prediction_is_non_toxic(value):
+    prediction = normalized_prediction(value)
+    if prediction == "":
+        return None
+    if prediction in {"0", "0.0", "false"}:
+        return True
+    if prediction in {"1", "1.0", "true"}:
+        return False
+    if prediction.startswith(("non toxic", "non toxin")):
+        return True
+    if prediction in {"toxic", "toxin", "toxic peptide", "toxin peptide"}:
+        return False
+    return None
 
 
 def is_toxinpred3_below_threshold(row, threshold=0.38):
@@ -77,23 +99,32 @@ def is_toxinpred3_below_threshold(row, threshold=0.38):
         return False
 
 
+def is_toxinpred3_non_toxic(row):
+    if row is None:
+        return False
+    prediction = prediction_is_non_toxic(row.get("toxinpred3_prediction"))
+    if prediction is not None:
+        return prediction
+    return is_toxinpred3_below_threshold(row)
+
+
 def is_toxteller_non_toxic(row):
     if row is None:
         return False
-    predictions = []
     for column in TOXTELLER_COLUMNS:
-        value = (row.get(column) or "").strip()
-        if value == "":
+        prediction = prediction_is_non_toxic(row.get(column))
+        if prediction is not True:
             return False
-        predictions.append(value)
-    return all(value in {"0", "0.0"} for value in predictions)
+    return True
 
 
 def is_captp_non_toxic(row):
     if row is None:
         return None
-    prediction = normalized_prediction(row.get("Prediction"))
-    return "toxic" not in prediction
+    prediction = prediction_is_non_toxic(row.get("Prediction"))
+    if prediction is None:
+        return False
+    return prediction
 
 
 def main():
@@ -127,13 +158,13 @@ def main():
         toxteller_row = pop_sequence_row(toxteller_by_sequence, sequence)
         captp_row = pop_sequence_row(captp_by_sequence, sequence)
 
-        toxinpred3_pass = is_toxinpred3_below_threshold(toxinpred3_row)
+        toxinpred3_non_toxic = is_toxinpred3_non_toxic(toxinpred3_row)
         toxteller_non_toxic = is_toxteller_non_toxic(toxteller_row)
         captp_non_toxic = is_captp_non_toxic(captp_row)
         captp_available = captp_non_toxic is not None
 
         passes_filter = (
-            toxinpred3_pass
+            toxinpred3_non_toxic
             and toxteller_non_toxic
             and (captp_non_toxic is not False)
         )

@@ -84,6 +84,51 @@ with open(fname, 'w') as fh:
 PY
 }
 
+add_missing_rule_nodes() {
+  local file="$1"
+  python3 - "$file" <<'PY'
+import re
+import subprocess
+import sys
+
+fname = sys.argv[1]
+with open(fname, "r", encoding="utf-8") as fh:
+    lines = fh.readlines()
+
+labels = set()
+for line in lines:
+    m = re.search(r'label\s*=\s*"([^"]+)"', line)
+    if m:
+        labels.add(m.group(1))
+
+rules = subprocess.check_output(
+    ["snakemake", "--list-rules"], text=True
+).splitlines()
+missing = [
+    rule.strip()
+    for rule in rules
+    if rule.strip() and rule.strip() != "all" and rule.strip() not in labels
+]
+if not missing:
+    sys.exit(0)
+
+insert_at = len(lines)
+for idx in range(len(lines) - 1, -1, -1):
+    if lines[idx].strip() == "}":
+        insert_at = idx
+        break
+
+new_nodes = [
+    f'\tdeclared_{i}[label = "{rule}", color = "0.00 0.0 0.70", style="rounded,dashed"];\n'
+    for i, rule in enumerate(missing, start=1)
+]
+lines[insert_at:insert_at] = new_nodes
+
+with open(fname, "w", encoding="utf-8") as fh:
+    fh.writelines(lines)
+PY
+}
+
 generate_dot --dag "$OUTDIR/pipeline_dag.dot"
 generate_dot --rulegraph "$OUTDIR/pipeline_rulegraph.dot"
 generate_dot --filegraph "$OUTDIR/pipeline_filegraph.dot"
@@ -93,6 +138,8 @@ if [[ $STRIP_ROOT_ALL -eq 1 ]]; then
   strip_rule_all_node "$OUTDIR/pipeline_rulegraph.dot"
   strip_rule_all_node "$OUTDIR/pipeline_filegraph.dot"
 fi
+
+add_missing_rule_nodes "$OUTDIR/pipeline_rulegraph.dot"
 
 # Build an additional "all pipeline options" graph from all top-level rules
 # defined in snakefile (exclude the controller rule 'all' to avoid a cluttered final edge).

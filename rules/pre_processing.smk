@@ -14,6 +14,7 @@ MMSEQS_SUB_MAT = MMSEQS_CONFIG.get(
 
 TOXTELLER_PROGRAM_DIR = "resources/ToxTeller"
 CAPTP_PROGRAM_DIR = "resources/CAPTP"
+HEPAD_PROGRAM_DIR = "resources/HEPAD"
 
 PEPTIDE_FASTAS = config["curated_fastas"]
 PEPTIDE_SET = "|".join(re.escape(name) for name in PEPTIDE_FASTAS)
@@ -23,13 +24,15 @@ wildcard_constraints:
 
 rule check_external_resources:
     output:
-        touch("results/setup/.external_resources_checked")
+        touch(".snakemake/checks/external_resources_checked")
     priority: 100
     params:
         toxteller=TOXTELLER_PROGRAM_DIR,
         captp=CAPTP_PROGRAM_DIR,
+        hepad=HEPAD_PROGRAM_DIR,
     shell:
         r"""
+        mkdir -p .snakemake/checks
         missing=0
 
         if [ ! -f "{params.toxteller}/program_resource/toxteller.py" ]; then
@@ -41,6 +44,12 @@ rule check_external_resources:
         if [ ! -f "{params.captp}/main.py" ]; then
             echo "CAPTP checkout is missing or incomplete: {params.captp}" >&2
             echo "Expected file: {params.captp}/main.py" >&2
+            missing=1
+        fi
+
+        if [ ! -f "{params.hepad}/userPackage/Package_HEPAD.py" ]; then
+            echo "HEPAD checkout is missing or incomplete: {params.hepad}" >&2
+            echo "Expected file: {params.hepad}/userPackage/Package_HEPAD.py" >&2
             missing=1
         fi
 
