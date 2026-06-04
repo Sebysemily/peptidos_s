@@ -4,3 +4,9 @@
 [submodule "resources/CAPTP"]
 	path = resources/CAPTP
 	url = https://github.com/jiaoshihu/CAPTP.git
+[submodule "resources/HEPAD"]
+	path = resources/HEPAD
+	url = https://github.com/csh07/HEPAD.git
+[submodule "resources/HemoDL"]
+	path = resources/HemoDL
+	url = https://github.com/abcair/HemoDL.git
