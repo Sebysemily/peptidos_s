@@ -176,6 +176,11 @@ def main():
             f"HEPAD did not produce expected outputs in {output_dir}"
         )
 
+    # Cleanup massive intermediate files to save disk space
+    import shutil
+    mldata_dir = workdir / "mlData"
+    if mldata_dir.exists():
+        shutil.rmtree(mldata_dir, ignore_errors=True)
 
 if __name__ == "__main__":
     main()
