@@ -400,11 +400,17 @@ rule build_hemolytic_summary:
             "results/hemo_check/hepad/Hmpm/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_hepad_Hmpm.csv"
         ),
+        hemo_DL=ancient(
+            "results/hemo_check/hemo_DL/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_hemo_DL.csv"
+        ),
     output:
         summary=(
             "results/hemo_check/hemolytic_summary/{peptide_set}/"
             "clusters_{peptide_set}_hemolytic_summary.csv"
         ),
+    params:
+        hemo_DL_cutoff=config.get("hemo_DL_cutoff", 0.4),
     conda:
         "../envs/tox_check/toxinpred3_captp.yml"
     shell:
@@ -416,6 +422,8 @@ rule build_hemolytic_summary:
             --hemopi2-regression {input.hemopi2_regression} \
             --hepad-hmp1 {input.hepad_hmp1} \
             --hepad-hmpm {input.hepad_hmpm} \
+            --hemo-dl {input.hemo_DL} \
+            --hemo-dl-cutoff {params.hemo_DL_cutoff} \
             --output-csv {output.summary}
         """
 rule merge_hemo_DL_batches:
@@ -433,6 +441,60 @@ rule merge_hemo_DL_batches:
         python code/merge_csv_reports.py \
             --inputs {input} \
             --output {output.report}
+        """
+
+rule filter_non_hemo_fasta:
+    input:
+        script="code/hem_check/filter_fasta_by_hemolytic_summary.py",
+        fasta=(
+            f"{NON_TOXIC_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_toxic.fasta"
+        ),
+        summary=ancient(
+            "results/hemo_check/hemolytic_summary/{peptide_set}/"
+            "clusters_{peptide_set}_hemolytic_summary.csv"
+        ),
+    output:
+        fasta=(
+            f"{NON_HEMO_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_hemo.fasta"
+        ),
+        stats=(
+            f"{NON_HEMO_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_hemo.stats"
+        ),
+    conda:
+        "../envs/tox_check/toxinpred3_captp.yml"
+    shell:
+        r"""
+        python {input.script} \
+            --fasta {input.fasta} \
+            --summary {input.summary} \
+            --output-fasta {output.fasta} \
+            --stats {output.stats}
+        """
+
+checkpoint split_non_hemo_batches:
+    input:
+        script="code/split_fasta_batches.py",
+        fasta=ancient(
+            f"{NON_HEMO_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_hemo.fasta"
+        ),
+    output:
+        directory(f"{NON_HEMO_FASTA_ROOT}/{{peptide_set}}/batches"),
+    params:
+        n_batches=lambda wildcards: n_batches(wildcards.peptide_set),
+        id_prefix=lambda wildcards: f"non_hemo_{wildcards.peptide_set}",
+    conda:
+        "../envs/tox_check/toxinpred3_captp.yml"
+    shell:
+        r"""
+        python {input.script} \
+            --input {input.fasta} \
+            --outdir {output} \
+            --n-batches {params.n_batches} \
+            --id-prefix {params.id_prefix}
         """
 
 

@@ -1,0 +1,14 @@
+name: properties
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pandas
+  - numpy
+  - scipy
+  - joblib
+  - scikit-learn
+  - matplotlib
+  - requests
+  - lxml
+  - pip

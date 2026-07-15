@@ -1,9 +1,6 @@
 results/*
 results/**
 results/***
-data/*
-data/**
-data/***
 .snakemake/*
 snakemake/*
 snakemake/**
@@ -32,3 +29,6 @@ __pycache__/
 Sequence_1
 seq.aac
 seq.dpc
+/data
+/metadata
+code/inmuno_check/finalmodel.h5

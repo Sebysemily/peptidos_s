@@ -1,9 +1,13 @@
-name: peptidos-hem-check-hemopi2
+name: peptidos-inmuno-check-algpred2
 channels:
+  - bioconda
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.8
   - pip
+  - joblib
+  - scikit-learn=0.24.2
+  - blast
   - pip:
       - algpred2

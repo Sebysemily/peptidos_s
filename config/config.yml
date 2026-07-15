@@ -19,6 +19,11 @@ hepad_datasets:
   - Hmpm
 
 # -----------------------------
+# Hemo check: Hemo_DL
+# -----------------------------
+hemo_DL_cutoff: 0.4
+
+# -----------------------------
 # Curated FASTA inputs
 # -----------------------------
 curated_fastas:
@@ -34,3 +39,9 @@ mmseqs:
   cov_mode: 1
   sensitivity: 7.5
   sub_mat: "aa:blosum62.out,nucl:nucleotide.out"
+
+# -----------------------------
+# Properties Calculation
+# -----------------------------
+properties:
+  process_groups_together: true

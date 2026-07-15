@@ -61,6 +61,8 @@ def main():
     parser.add_argument("--hemopi2-regression", required=True, help="Merged HemoPI-2 Regression CSV")
     parser.add_argument("--hepad-hmp1", required=True, help="Merged HEPAD Hmp1 CSV")
     parser.add_argument("--hepad-hmpm", required=True, help="Merged HEPAD Hmpm CSV")
+    parser.add_argument("--hemo-dl", required=True, help="Merged Hemo DL CSV")
+    parser.add_argument("--hemo-dl-cutoff", type=float, default=0.4, help="Cutoff for Hemo DL probability")
     parser.add_argument("--output-csv", required=True, help="Output summary CSV")
     args = parser.parse_args()
 
@@ -71,6 +73,7 @@ def main():
     hemopi2_reg_by_seq = rows_by_sequence(read_csv(args.hemopi2_regression), "sequence")
     hepad_hmp1_by_seq = rows_by_sequence(read_csv(args.hepad_hmp1), "sequence")
     hepad_hmpm_by_seq = rows_by_sequence(read_csv(args.hepad_hmpm), "sequence")
+    hemo_dl_by_seq = rows_by_sequence(read_csv(args.hemo_dl), "sequence")
 
     output_rows = []
 
@@ -80,6 +83,16 @@ def main():
         hemopi2_reg_row = pop_sequence_row(hemopi2_reg_by_seq, sequence) or {}
         hepad_hmp1_row = pop_sequence_row(hepad_hmp1_by_seq, sequence) or {}
         hepad_hmpm_row = pop_sequence_row(hepad_hmpm_by_seq, sequence) or {}
+        hemo_dl_row = pop_sequence_row(hemo_dl_by_seq, sequence) or {}
+
+        hemo_dl_prob_str = hemo_dl_row.get("hemo_DL_probability", "")
+        hemo_dl_binary = ""
+        if hemo_dl_prob_str:
+            try:
+                prob = float(hemo_dl_prob_str)
+                hemo_dl_binary = 1 if prob >= args.hemo_dl_cutoff else 0
+            except ValueError:
+                pass
 
         row = {
             "peptide_index": index,
@@ -92,6 +105,8 @@ def main():
             "hepad_Hmp1_rbfsvm_binary": hepad_hmp1_row.get("hepad_Hmp1_rbfsvm_binary", ""),
             "hepad_Hmpm_lightgbm_binary": hepad_hmpm_row.get("hepad_Hmpm_lightgbm_binary", ""),
             "hepad_Hmpm_gbc_binary": hepad_hmpm_row.get("hepad_Hmpm_gbc_binary", ""),
+            "hemo_DL_probability": hemo_dl_prob_str,
+            "hemo_DL_binary": hemo_dl_binary,
         }
         output_rows.append(row)
 

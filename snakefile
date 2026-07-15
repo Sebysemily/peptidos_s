@@ -25,6 +25,12 @@ CAPTP_BATCH_DIR = f"{BATCH_FASTA_ROOT}/captp"
 NON_TOXIC_FASTA_ROOT = config.get(
     "non_toxic_fasta_root", "data/derived/non_toxic"
 )
+NON_HEMO_FASTA_ROOT = config.get(
+    "non_hemo_fasta_root", "data/derived/non_hemo"
+)
+POST_CHECKS_FASTA_ROOT = config.get(
+    "post_checks_fasta_root", "data/derived/post_checks"
+)
 
 
 def n_batches(peptide_set):
@@ -37,6 +43,8 @@ def n_batches(peptide_set):
 include: "rules/pre_processing.smk"
 include: "rules/tox_check.smk"
 include: "rules/hem_check.smk"
+include: "rules/inmuno_check.smk"
+include: "rules/properties.smk"
 
 SETUP_TARGETS = [
     ".snakemake/checks/external_resources_checked",
@@ -149,6 +157,70 @@ HEPAD_TARGETS = [
 ]
 
 
+HEMO_DL_TARGETS = [
+    *expand(
+        (
+            "results/hemo_check/hemo_DL/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_hemo_DL.csv"
+        ),
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
+HEMOLYTIC_SUMMARY_TARGETS = [
+    *expand(
+        (
+            "results/hemo_check/hemolytic_summary/{peptide_set}/"
+            "clusters_{peptide_set}_hemolytic_summary.csv"
+        ),
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
+NON_HEMO_FASTA_TARGETS = [
+    *expand(
+        (
+            f"{NON_HEMO_FASTA_ROOT}/{{peptide_set}}/"
+            "clusters_{peptide_set}_rep_seq_non_hemo.fasta"
+        ),
+        peptide_set=PEPTIDE_SETS,
+    ),
+    *expand(
+        f"{NON_HEMO_FASTA_ROOT}/{{peptide_set}}/batches",
+        peptide_set=PEPTIDE_SETS,
+    ),
+]
+
+ALGPRED2_TARGETS = [
+    *expand(
+        (
+            "results/inmuno_check/algpred2/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_algpred2.csv"
+        ),
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
+ALLERGENAI_TARGETS = [
+    *expand(
+        (
+            "results/inmuno_check/allergenai/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_allergenai.csv"
+        ),
+        peptide_set=[p for p in PEPTIDE_SETS if p != "10_25"],
+    )
+]
+
+ALLERTRANS_TARGETS = [
+    *expand(
+        (
+            "results/inmuno_check/allertrans/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_allertrans.csv"
+        ),
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
 HEPAD_ONLY_TARGETS = [
     *expand(
         f"{NON_TOXIC_FASTA_ROOT}/{{peptide_set}}/batches",
@@ -157,6 +229,31 @@ HEPAD_ONLY_TARGETS = [
     *HEPAD_TARGETS,
 ]
 
+
+INMUNO_SUMMARY_TARGETS = [
+    *expand(
+        "results/inmuno_check/inmuno_summary/{peptide_set}/clusters_{peptide_set}_inmuno_summary.csv",
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
+POST_CHECKS_FASTA_TARGETS = [
+    *expand(
+        f"{POST_CHECKS_FASTA_ROOT}/{{peptide_set}}/clusters_{{peptide_set}}_rep_seq_post_checks.fasta",
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
+PROCESS_GROUPS_TOGETHER = config.get("properties", {}).get("process_groups_together", True)
+if PROCESS_GROUPS_TOGETHER:
+    PROPERTIES_TARGETS = ["metadata/characteristics.csv"]
+else:
+    PROPERTIES_TARGETS = [
+        *expand(
+            "metadata/{peptide_set}/characteristics.csv",
+            peptide_set=PEPTIDE_SETS,
+        )
+    ]
 
 rule all:
     input:
@@ -171,6 +268,15 @@ rule all:
             + HEMOPI2_TARGETS
             + MACREL_TARGETS
             + HEPAD_TARGETS
+            + HEMO_DL_TARGETS
+            + HEMOLYTIC_SUMMARY_TARGETS
+            + NON_HEMO_FASTA_TARGETS
+            + ALGPRED2_TARGETS
+            + ALLERGENAI_TARGETS
+            + ALLERTRANS_TARGETS
+            + INMUNO_SUMMARY_TARGETS
+            + POST_CHECKS_FASTA_TARGETS
+            + PROPERTIES_TARGETS
         )
 
 
@@ -180,3 +286,5 @@ rule all:
 rule hepad_all:
     input:
         HEPAD_ONLY_TARGETS
+
+
