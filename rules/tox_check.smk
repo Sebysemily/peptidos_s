@@ -323,6 +323,10 @@ rule build_toxicity_summary:
             "results/tox_check/captp/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_captp.csv"
         ),
+        amptox=ancient(
+            "results/tox_check/amptox/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_amptox.csv"
+        ),
     output:
         summary=(
             "results/tox_check/toxicity_summary/{peptide_set}/"
@@ -337,6 +341,7 @@ rule build_toxicity_summary:
             --toxinpred3 {input.toxinpred3} \
             --toxteller {input.toxteller} \
             --captp {input.captp} \
+            --amptox {input.amptox} \
             --output-csv {output.summary}
         """
 

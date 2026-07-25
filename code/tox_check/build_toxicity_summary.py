@@ -135,6 +135,7 @@ def main():
     parser.add_argument("--toxinpred3", required=True, help="Merged ToxinPred3 CSV")
     parser.add_argument("--toxteller", required=True, help="Merged ToxTeller CSV")
     parser.add_argument("--captp", required=True, help="Merged CAPTP CSV")
+    parser.add_argument("--amptox", required=True, help="Merged AMPTox CSV")
     parser.add_argument("--output-csv", required=True, help="Output summary CSV")
     args = parser.parse_args()
 
@@ -150,6 +151,7 @@ def main():
     toxinpred3_by_sequence = rows_by_sequence(toxinpred3_rows, "sequence")
     toxteller_by_sequence = rows_by_sequence(read_csv(args.toxteller), "Sequence")
     captp_by_sequence = rows_by_sequence(read_csv(args.captp), "Sequences")
+    amptox_by_sequence = rows_by_sequence(read_csv(args.amptox), "sequence")
 
     output_rows = []
 
@@ -157,16 +159,22 @@ def main():
         toxinpred3_row = pop_sequence_row(toxinpred3_by_sequence, sequence)
         toxteller_row = pop_sequence_row(toxteller_by_sequence, sequence)
         captp_row = pop_sequence_row(captp_by_sequence, sequence)
+        amptox_row = pop_sequence_row(amptox_by_sequence, sequence)
 
         toxinpred3_non_toxic = is_toxinpred3_non_toxic(toxinpred3_row)
         toxteller_non_toxic = is_toxteller_non_toxic(toxteller_row)
         captp_non_toxic = is_captp_non_toxic(captp_row)
         captp_available = captp_non_toxic is not None
+        
+        amptox_rf = prediction_is_non_toxic(amptox_row.get("amptox_rf_prediction")) if amptox_row else None
+        amptox_svc = prediction_is_non_toxic(amptox_row.get("amptox_svc_prediction")) if amptox_row else None
+        amptox_non_toxic = (amptox_rf is not False) and (amptox_svc is not False)
 
         passes_filter = (
             toxinpred3_non_toxic
             and toxteller_non_toxic
             and (captp_non_toxic is not False)
+            and amptox_non_toxic
         )
 
         row = {
@@ -204,6 +212,8 @@ def main():
             "captp_available": str(captp_available).lower(),
             "captp_prediction": captp_row.get("Prediction", "") if captp_row else "",
             "captp_confidence": captp_row.get("Confidence", "") if captp_row else "",
+            "amptox_rf_prediction": amptox_row.get("amptox_rf_prediction", "") if amptox_row else "",
+            "amptox_svc_prediction": amptox_row.get("amptox_svc_prediction", "") if amptox_row else "",
             "toxicity_filter_pass": str(passes_filter).lower(),
         }
         output_rows.append(row)

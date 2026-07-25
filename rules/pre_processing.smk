@@ -81,6 +81,7 @@ rule mmseqs_easy_cluster:
         "../envs/pre_processing.yml"
     shell:
         r"""
+        rm -rf {params.tmp}
         mkdir -p {params.outdir} {params.tmp}
         mmseqs easy-cluster {input.fasta} {params.prefix} {params.tmp} \
             --min-seq-id {params.min_seq_id} \

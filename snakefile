@@ -94,6 +94,13 @@ CAPTP_TARGETS = [
     )
 ]
 
+AMPTOX_TARGETS = [
+    *expand(
+        "results/tox_check/amptox/{peptide_set}/clusters_{peptide_set}_rep_seq_amptox.csv",
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
 TOXICITY_SUMMARY_TARGETS = [
     *expand(
         "results/tox_check/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv",
@@ -246,13 +253,14 @@ POST_CHECKS_FASTA_TARGETS = [
 
 PROCESS_GROUPS_TOGETHER = config.get("properties", {}).get("process_groups_together", True)
 if PROCESS_GROUPS_TOGETHER:
-    PROPERTIES_TARGETS = ["metadata/characteristics.csv"]
+    PROPERTIES_TARGETS = ["metadata/characteristics.csv", "metadata/filtering.csv"]
 else:
     PROPERTIES_TARGETS = [
         *expand(
             "metadata/{peptide_set}/characteristics.csv",
             peptide_set=PEPTIDE_SETS,
-        )
+        ),
+        "metadata/filtering.csv"
     ]
 
 rule all:
@@ -263,6 +271,7 @@ rule all:
             + TOX_CHECK_TARGETS
             + TOXTELLER_TARGETS
             + CAPTP_TARGETS
+            + AMPTOX_TARGETS
             + TOXICITY_SUMMARY_TARGETS
             + NON_TOXIC_FASTA_TARGETS
             + HEMOPI2_TARGETS
