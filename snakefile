@@ -45,6 +45,7 @@ include: "rules/tox_check.smk"
 include: "rules/hem_check.smk"
 include: "rules/inmuno_check.smk"
 include: "rules/properties.smk"
+include: "rules/ACP_predictors.smk" # ACPScanner disabled internally, but file has AntiCP2
 
 SETUP_TARGETS = [
     ".snakemake/checks/external_resources_checked",
@@ -94,12 +95,12 @@ CAPTP_TARGETS = [
     )
 ]
 
-AMPTOX_TARGETS = [
-    *expand(
-        "results/tox_check/amptox/{peptide_set}/clusters_{peptide_set}_rep_seq_amptox.csv",
-        peptide_set=PEPTIDE_SETS,
-    )
-]
+# AMPTOX_TARGETS = [
+#     *expand(
+#         "results/tox_check/amptox/{peptide_set}/clusters_{peptide_set}_rep_seq_amptox.csv",
+#         peptide_set=PEPTIDE_SETS,
+#     )
+# ]
 
 TOXICITY_SUMMARY_TARGETS = [
     *expand(
@@ -251,6 +252,27 @@ POST_CHECKS_FASTA_TARGETS = [
     )
 ]
 
+ANTICP2_TARGETS = [
+    *expand(
+        "results/acp_predictors/anticp2/{peptide_set}/clusters_{peptide_set}_rep_seq_anticp2.csv",
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
+# ACP_PREDICTORS_TARGETS = [
+#     *expand(
+#         "results/acp_predictors/acpscanner/{peptide_set}/clusters_{peptide_set}_rep_seq_acpscanner.csv",
+#         peptide_set=PEPTIDE_SETS,
+#     )
+# ]
+
+ACP_OPE_TARGETS = [
+    *expand(
+        "results/acp_predictors/acp_ope/{peptide_set}/clusters_{peptide_set}_rep_seq_acp_ope.csv",
+        peptide_set=PEPTIDE_SETS,
+    )
+]
+
 PROCESS_GROUPS_TOGETHER = config.get("properties", {}).get("process_groups_together", True)
 if PROCESS_GROUPS_TOGETHER:
     PROPERTIES_TARGETS = ["metadata/characteristics.csv", "metadata/filtering.csv"]
@@ -271,7 +293,7 @@ rule all:
             + TOX_CHECK_TARGETS
             + TOXTELLER_TARGETS
             + CAPTP_TARGETS
-            + AMPTOX_TARGETS
+            # + AMPTOX_TARGETS
             + TOXICITY_SUMMARY_TARGETS
             + NON_TOXIC_FASTA_TARGETS
             + HEMOPI2_TARGETS
@@ -286,6 +308,9 @@ rule all:
             + INMUNO_SUMMARY_TARGETS
             + POST_CHECKS_FASTA_TARGETS
             + PROPERTIES_TARGETS
+            + ANTICP2_TARGETS
+            + ACP_OPE_TARGETS
+            # + ACP_PREDICTORS_TARGETS # Disabled: requires SPIDER3, ESM, and PDB structures
         )
 
 

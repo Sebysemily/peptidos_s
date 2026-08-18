@@ -135,7 +135,7 @@ def main():
     parser.add_argument("--toxinpred3", required=True, help="Merged ToxinPred3 CSV")
     parser.add_argument("--toxteller", required=True, help="Merged ToxTeller CSV")
     parser.add_argument("--captp", required=True, help="Merged CAPTP CSV")
-    parser.add_argument("--amptox", required=True, help="Merged AMPTox CSV")
+    parser.add_argument("--amptox", required=False, help="Merged AMPTox CSV")
     parser.add_argument("--output-csv", required=True, help="Output summary CSV")
     args = parser.parse_args()
 
@@ -151,7 +151,11 @@ def main():
     toxinpred3_by_sequence = rows_by_sequence(toxinpred3_rows, "sequence")
     toxteller_by_sequence = rows_by_sequence(read_csv(args.toxteller), "Sequence")
     captp_by_sequence = rows_by_sequence(read_csv(args.captp), "Sequences")
-    amptox_by_sequence = rows_by_sequence(read_csv(args.amptox), "sequence")
+    
+    if args.amptox:
+        amptox_by_sequence = rows_by_sequence(read_csv(args.amptox), "sequence")
+    else:
+        amptox_by_sequence = defaultdict(deque)
 
     output_rows = []
 
@@ -159,7 +163,7 @@ def main():
         toxinpred3_row = pop_sequence_row(toxinpred3_by_sequence, sequence)
         toxteller_row = pop_sequence_row(toxteller_by_sequence, sequence)
         captp_row = pop_sequence_row(captp_by_sequence, sequence)
-        amptox_row = pop_sequence_row(amptox_by_sequence, sequence)
+        amptox_row = pop_sequence_row(amptox_by_sequence, sequence) if args.amptox else None
 
         toxinpred3_non_toxic = is_toxinpred3_non_toxic(toxinpred3_row)
         toxteller_non_toxic = is_toxteller_non_toxic(toxteller_row)
@@ -168,7 +172,11 @@ def main():
         
         amptox_rf = prediction_is_non_toxic(amptox_row.get("amptox_rf_prediction")) if amptox_row else None
         amptox_svc = prediction_is_non_toxic(amptox_row.get("amptox_svc_prediction")) if amptox_row else None
-        amptox_non_toxic = (amptox_rf is not False) and (amptox_svc is not False)
+        
+        # If AMPTox was not run or has no result, default to True (non-toxic) so it doesn't fail the filter
+        amptox_non_toxic = True
+        if amptox_row:
+            amptox_non_toxic = (amptox_rf is not False) and (amptox_svc is not False)
 
         passes_filter = (
             toxinpred3_non_toxic

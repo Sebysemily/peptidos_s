@@ -221,6 +221,62 @@ rule merge_toxteller_batches:
             --output {output.report}
         """
 
+rule amptox_batch:
+    input:
+        fasta=tox_check_batch_fasta,
+        mapping=tox_check_batch_mapping,
+    output:
+        report=(
+            "results/tox_check/amptox/{peptide_set}/batches/"
+            "batch_{batch_id}.csv"
+        ),
+    params:
+        outdir="results/tox_check/amptox/{peptide_set}/batches",
+        workdir="results/tox_check/amptox/{peptide_set}/work/batch_{batch_id}",
+        raw_report="results/tox_check/amptox/{peptide_set}/work/batch_{batch_id}/raw_amptox.csv",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb
+    conda:
+        "../envs/tox_check/amptox.yml"
+    shell:
+        r"""
+        mkdir -p {params.outdir}
+        rm -rf {params.workdir}
+        mkdir -p {params.workdir}
+        input_fasta="$(realpath {input.fasta})"
+        raw_report="$(realpath -m {params.raw_report})"
+        output_report="$(realpath -m {output.report})"
+        python code/tox_check/run_amptox.py \
+            --fasta "$input_fasta" \
+            --resources resources/amptox \
+            --output "$raw_report"
+        python code/tox_check/annotate_amptox_report.py \
+            --raw-report "$raw_report" \
+            --mapping {input.mapping} \
+            --output "$output_report"
+        """
+
+rule merge_amptox_batches:
+    input:
+        lambda wildcards: tox_check_batch_reports(wildcards, "amptox")
+    output:
+        report=(
+            "results/tox_check/amptox/{peptide_set}/"
+            "clusters_{peptide_set}_rep_seq_amptox.csv"
+        ),
+        validated=touch(
+            "results/tox_check/amptox/{peptide_set}/.batches_validated"
+        ),
+    conda:
+        "../envs/tox_check/amptox.yml"
+    shell:
+        r"""
+        python code/merge_csv_reports.py \
+            --inputs {input} \
+            --output {output.report}
+        """
+
 
 rule filter_captp_batch:
     input:
@@ -323,10 +379,10 @@ rule build_toxicity_summary:
             "results/tox_check/captp/{peptide_set}/"
             "clusters_{peptide_set}_rep_seq_captp.csv"
         ),
-        amptox=ancient(
-            "results/tox_check/amptox/{peptide_set}/"
-            "clusters_{peptide_set}_rep_seq_amptox.csv"
-        ),
+        # amptox=ancient(
+        #     "results/tox_check/amptox/{peptide_set}/"
+        #     "clusters_{peptide_set}_rep_seq_amptox.csv"
+        # ),
     output:
         summary=(
             "results/tox_check/toxicity_summary/{peptide_set}/"
@@ -341,7 +397,7 @@ rule build_toxicity_summary:
             --toxinpred3 {input.toxinpred3} \
             --toxteller {input.toxteller} \
             --captp {input.captp} \
-            --amptox {input.amptox} \
+            # --amptox input.amptox \
             --output-csv {output.summary}
         """
 

@@ -213,3 +213,6 @@ results/tox_check/toxinpred3/25_50/clusters_25_50_rep_seq_toxinpred3.csv
 ```bash
 snakemake --unlock
 ```
+
+- **ACPScanner**: Source code and materials obtained from http://acpscanner.denglab.org (DOI: 10.1021/acs.jcim.3c01860) are automatically downloaded to `resources/acpscanner`. This tool is currently disabled in the pipeline because it requires heavy external dependencies to run on novel sequences (specifically ESM-1b embeddings, 3D PDB structures, and SPIDER3 secondary structure predictions, with SPIDER3 being the most problematic to automate).
+- **ACP-OPE**: Cloned as a resource into `resources/acp-ope`. The authors' original ensemble uses 3 models (BiLSTM, LightGBM, CNN). However, the CNN model requires 144 specific features selected via Random Forest during training, and the exact indices for these features were not saved. This makes it impossible to reproduce the exact feature subset for novel sequences. As a result, our pipeline wrapper (`code/acp_predictors/run_acp_ope.py`) intentionally omits the CNN model and only generates predictions using the BiLSTM and LightGBM models.
