@@ -1,218 +1,99 @@
-# PEPTIDOS Toxicity Workflow
+# PEPTIDOS Predictive Workflow
+<!--toc:start-->
+- [Requirements](#requirements)
+- [Useful Commands](#useful-commands)
+- [Current Flow](#current-flow)
+- [Main Outputs](#main-outputs)
+- [Global Parameters](#global-parameters)
+- [Tools and Core Parameters](#tools-and-core-parameters)
+  - [Pre-processing](#pre-processing)
+  - [Toxicity Prediction](#toxicity-prediction)
+  - [Hemolysis Prediction](#hemolysis-prediction)
+  - [Immunogenicity Prediction](#immunogenicity-prediction)
+  - [Anticancer Prediction (ACP)](#anticancer-prediction-acp)
+<!--toc:end-->
 
-Snakemake workflow for peptide preprocessing and toxicity prediction.
+Snakemake workflow for peptide preprocessing and multi-model prediction. The pipeline systematically evaluates candidate peptides across 4 predictive modules (Toxicity, Hemolysis, Immunogenicity, and Anticancer properties) to identify safe and effective therapeutic candidates.
 
-## Workflow
+Requirements
+----------
 
-Clone the repository with external resources:
+- `snakemake` with `conda` or `mamba`.
+- Internet connection to install the environments.
+- Clone the repository with external resources using `git clone --recursive <URL>` or run `git submodule update --init --recursive` if already cloned.
+
+Useful Commands
+---------------
 
 ```bash
-git clone --recursive https://github.com/<user>/<repo>.git
-```
-
-If the repository was already cloned, initialize resources with:
-
-```bash
-git submodule update --init --recursive
-```
-
-Run the pipeline with:
-
-```bash
+# Complete main flow
 snakemake --cores all --use-conda
 ```
 
-Current stages:
+Current Flow
+------------
 
-1. Cluster curated peptide FASTA files with MMseqs2.
-2. Run ToxinPred3 on representative sequences.
-3. Run ToxTeller on representative sequences.
-4. Run CAPTP on compatible representative sequences.
-5. Build a combined toxicity summary CSV for manual filtering.
-6. Optionally run HemoPI2 classification and regression on representative sequences.
+The pipeline executes 4 predictive modules iteratively, filtering and characterizing peptide candidates:
 
-## Inputs
+1. **Inputs & Pre-processing:** Curated FASTA files configured in `config/config.yml` are clustered with MMseqs2.
+2. **Toxicity Prediction (Module 1):** Representative sequences are evaluated using ToxinPred3, ToxTeller, and CAPTP. A combined toxicity summary is generated, filtering out toxic candidates.
+3. **Hemolysis Prediction (Module 2):** Non-toxic peptides are evaluated using HemoPI2, Macrel, HEPAD, and Hemo_DL. Generates a hemolytic summary and a non-hemolytic sequence subset.
+4. **Immunogenicity Prediction (Module 3):** Non-hemolytic peptides are screened using Algpred2, AllergenAI, and AllerTrans. Generates an immunogenicity summary.
+5. **Anticancer Prediction (Module 4):** Evaluates sequences for anti-cancer properties (ACP) using AntiCP2.
+6. **Properties & Final Report:** Final physical/chemical characteristics and overall filtering reports (`metadata/characteristics.csv`, `metadata/filtering.csv`) are produced.
 
-Curated FASTA inputs are configured in `config/config.yml`:
+Main Outputs
+-------------------
 
-```yaml
-curated_fastas:
-  "25_50": "data/curated_md-lais/25_50/alls_RangeSelected_25_50_curado.fasta"
-  # "10_25": "data/curated_md-lais/10_25/alls_RangeSelected_10_25_curado.fasta"
-```
+- Pre-processed sequences: `data/curated_md-lais/mmseqs2/`
+- Filtered FASTA subsets: `data/derived/non_toxic/` and `data/derived/non_hemo/`
+- Combined Summaries:
+  - Toxicity: `results/tox_check/toxicity_summary/`
+  - Hemolysis: `results/hemo_check/hemolytic_summary/`
+  - Immunogenicity: `results/inmuno_check/inmuno_summary/`
+- Final physical/chemical properties: `metadata/characteristics.csv`
+- Final general filtering report: `metadata/filtering.csv`
 
-Each key under `curated_fastas` is used as the workflow identifier and output
-folder name. Add or uncomment entries here to request additional subsets.
+Global Parameters
+-----------------
 
-These FASTA files were obtained from MD-Lais GUI FASTA curator using automatic
-assignment and replacing each selected position with the most frequent residue.
+Files: `config/config.yml`.
 
-## Configuration
+To avoid cluttering the configuration files, not all parameters used across the pipeline are exposed as global variables. The main parameters in the config file are:
 
-Main configuration file:
+- **Inputs:** `curated_fastas` maps the peptide set name (e.g., `"25_50"`) to its file path.
+- **Resources:** `max_threads: 18`.
+- **Batching:** `batching` controls the number of shared check batches per subset to manage memory limits.
+- **Tool Settings:** MMseqs2 clustering parameters and global workflow behaviors (e.g., `process_groups_together`).
 
-```text
-config/config.yml
-```
+Tools and Core Parameters
+-------------------------
 
-Important fields:
+The pipeline relies on several bioinformatics and machine learning tools. Tools are isolated in specific conda environments (e.g., `envs/tox_check/toxinpred3_captp.yml`, `envs/hem_check/hemopi2.yml`).
 
-- `curated_fastas`: FASTA files to process. The keys define the subset names.
-- `batching`: number of shared toxin-check batches per subset. Missing subsets
-  default to 1 batch.
-- `max_threads`: global thread limit used by all threaded rules.
-- `mmseqs`: MMseqs2 clustering parameters.
+### Pre-processing
 
-Example:
+- **MMseqs2:** Clusters curated peptide FASTA files to extract representative sequences.
 
-```yaml
-max_threads: 18
+### Toxicity Prediction
 
-batching:
-  "25_50": 1
-  # "10_25": 1
-```
+- **ToxinPred3:** ToxinPred3 and CAPTP use shared batches controlled by the `batching` config. Temporary workflow artifacts (like `seq.aac`) are cleaned up.
+- **ToxTeller:** Uses its own batches of up to 9,500 sequences because it refuses inputs above 10,000 sequences. Requires older model-compatible scikit-learn stack.
+- **CAPTP:** Only receives sequences up to 49 amino acids because its preprocessing adds a `[CLS]` token and fails on 50-aa peptides. Longer sequences are automatically omitted.
 
-ToxTeller is stored inside the project under `resources/ToxTeller/`. If
-`program_resource/toxteller.py` is not found there, initialize the resource
-submodules with:
+### Hemolysis Prediction
 
-```bash
-git submodule update --init --recursive
-```
+- **HemoPI2:** Classification uses Hybrid1 RF+MERCI (`-m 2`) and regression reports HC50. Installed via pip as the local standalone does not include the large model directory.
+- **Macrel:** Runs in a separate environment due to Bioconda dependency conflicts with the modern Python/PyTorch stack.
+- **HEPAD:** Hemolytic activity predictor.
+- **Hemo_DL:** Deep learning based hemolysis prediction.
 
-The checkout must contain `program_resource/toxteller.py` and the
-ToxTeller model/scaler pickle files.
+### Immunogenicity Prediction
 
-CAPTP is stored inside the project under `resources/CAPTP/`. The checkout must
-contain `main.py`, `data/AAindex.pkl`, and `data/model_saved.pkl`.
+- **Algpred2:** Predicts allergenic peptides.
+- **AllergenAI:** Assesses sequence allergenicity.
+- **AllerTrans:** Transformer-based prediction model for allergens.
 
-ToxTeller and CAPTP are expected to be git submodules pinned by the parent
-repository. Snakemake validates that their expected files exist, but it does not
-clone them during normal workflow execution.
+### Anticancer Prediction (ACP)
 
-## Environments
-
-Snakemake creates conda environments from:
-
-- `envs/pre_processing.yml` for MMseqs2.
-- `envs/tox_check/toxinpred3_captp.yml` for ToxinPred3, CAPTP, and toxicity
-  summary helpers.
-- `envs/tox_check/toxteller.yml` for ToxTeller with its older model-compatible
-  scikit-learn stack.
-- `envs/hem_check/hemopi2.yml` for HemoPI2.
-- `envs/hem_check/macrel.yml` for Macrel.
-
-`envs/tox_check/toxinpred3_captp.yml` pins `toxinpred3==1.4` and includes
-PyTorch for CAPTP.
-`envs/tox_check/toxteller.yml` follows the bundled ToxTeller requirements so
-its pickle models load with the expected scikit-learn version.
-`envs/hem_check/hemopi2.yml` installs HemoPI2 from pip. Macrel uses a separate
-environment because its Bioconda dependency stack conflicts with the modern
-Python/PyTorch/transformers stack required by HemoPI2.
-
-## Outputs
-
-Derived batch FASTA inputs:
-
-```text
-data/derived/batches/tox_check/{peptide_set}/batch_{batch_id}.fasta
-data/derived/batches/toxteller/{peptide_set}/batch_{batch_id}.fasta
-data/derived/batches/captp/{peptide_set}/batch_{batch_id}.fasta
-```
-
-MMseqs2 representative sequences:
-
-```text
-data/curated_md-lais/mmseqs2/{peptide_set}/clusters_{peptide_set}_rep_seq.fasta
-```
-
-ToxinPred3 report:
-
-```text
-results/tox_check/toxinpred3/{peptide_set}/clusters_{peptide_set}_rep_seq_toxinpred3.csv
-```
-
-ToxTeller report:
-
-```text
-results/tox_check/toxteller/{peptide_set}/clusters_{peptide_set}_rep_seq_toxteller.csv
-```
-
-CAPTP report:
-
-```text
-results/tox_check/captp/{peptide_set}/clusters_{peptide_set}_rep_seq_captp.csv
-```
-
-Combined toxicity summary:
-
-```text
-results/tox_check/toxicity_summary/{peptide_set}/clusters_{peptide_set}_toxicity_summary.csv
-```
-
-Non-toxic derived FASTA inputs:
-
-```text
-data/derived/non_toxic/{peptide_set}/clusters_{peptide_set}_rep_seq_non_toxic.fasta
-data/derived/non_toxic/{peptide_set}/batches/batch_{batch_id}.fasta
-data/derived/non_toxic/{peptide_set}/batches/batch_{batch_id}.mapping.csv
-```
-
-HemoPI2 reports:
-
-```text
-results/hemo_check/hemopi2_classification/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_classification.csv
-results/hemo_check/hemopi2_regression/{peptide_set}/clusters_{peptide_set}_rep_seq_hemopi2_regression.csv
-```
-
-Macrel report:
-
-```text
-results/hemo_check/macrel/{peptide_set}/clusters_{peptide_set}_rep_seq_macrel.csv
-```
-
-Known completed output:
-
-```text
-results/tox_check/toxinpred3/25_50/clusters_25_50_rep_seq_toxinpred3.csv
-```
-
-## Notes
-
-- ToxinPred3 and CAPTP use shared batches controlled by `batching`, then each
-  tool merges its own CSVs.
-- ToxTeller uses its own batches of up to 9,500 sequences because it refuses
-  inputs above 10,000 sequences.
-- CAPTP only receives sequences up to 49 aa because the bundled CAPTP
-  preprocessing adds a `[CLS]` token and fails on 50-aa peptides. Empty
-  sequences and longer peptides are omitted from CAPTP outputs and can be left
-  blank in a combined final report.
-- The combined toxicity summary uses the FASTA sequence as the merge key for
-  ToxTeller and CAPTP, keeps the original FASTA header as `peptide_id`, and
-  includes `toxicity_filter_pass` as a convenience column for manual filtering.
-- HemoPI2 is installed from pip because the local standalone checkout does not
-  include the large model directory. Classification uses Hybrid1 RF+MERCI
-  (`-m 2`) and regression reports HC50. HemoPI2 rules live in
-  `rules/hem_check.smk`; future HemoPI2 helper code should live under
-  `code/hem_check/`.
-- HemoPI2 and Macrel run on indexed non-toxic derived FASTA batches under
-  `data/derived/non_toxic/{peptide_set}/batches`. Each batch has a sibling
-  `batch_{batch_id}.mapping.csv` with `indexed_id`, `peptide_id`, `sequence`,
-  and `length`, which is used to restore original peptide IDs in final reports.
-- CSV batch merging uses the shared helper `code/merge_csv_reports.py`.
-- External ToxTeller/CAPTP versions are fixed by the submodule commits recorded
-  in the parent repository. To restore them, run
-  `git submodule update --init --recursive`.
-- `10_25` is much larger than `25_50`; review runtime and storage before it is
-  enabled as a default target.
-- ToxinPred3 may create temporary files such as `seq.aac`, `seq.dpc`, and
-  `Sequence_1`; these are workflow artifacts and should not be committed.
-- If a previous Snakemake run was interrupted, unlock the working directory:
-
-```bash
-snakemake --unlock
-```
-
-- **ACPScanner**: Source code and materials obtained from http://acpscanner.denglab.org (DOI: 10.1021/acs.jcim.3c01860) are automatically downloaded to `resources/acpscanner`. This tool is currently disabled in the pipeline because it requires heavy external dependencies to run on novel sequences (specifically ESM-1b embeddings, 3D PDB structures, and SPIDER3 secondary structure predictions, with SPIDER3 being the most problematic to automate).
-- **ACP-OPE**: Cloned as a resource into `resources/acp-ope`. The authors' original ensemble uses 3 models (BiLSTM, LightGBM, CNN). However, the CNN model requires 144 specific features selected via Random Forest during training, and the exact indices for these features were not saved. This makes it impossible to reproduce the exact feature subset for novel sequences. As a result, our pipeline wrapper (`code/acp_predictors/run_acp_ope.py`) intentionally omits the CNN model and only generates predictions using the BiLSTM and LightGBM models.
+- **AntiCP2:** Predicts Anticancer Peptides based on sequence features.

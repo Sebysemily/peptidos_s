@@ -268,7 +268,6 @@ ANTICP2_TARGETS = [
 
 ACP_OPE_TARGETS = [
     *expand(
-        "results/acp_predictors/acp_ope/{peptide_set}/clusters_{peptide_set}_rep_seq_acp_ope.csv",
         peptide_set=PEPTIDE_SETS,
     )
 ]
